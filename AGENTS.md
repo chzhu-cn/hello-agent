@@ -5,3 +5,5 @@
 3. HTTP 客户端使用 `httpx` 或 `requests`。
 4. 需要开发 Web 服务时，使用 `FastAPI`。
 5. 开始项目工作前，查看 [任务清单](docs/tasks.md)，确认当前阶段和下一步；完成任务后，按实际完成情况更新清单与当前进度。每次只推进当前约定的学习步骤。
+6. 数据模型与数据约束统一使用 `Pydantic`，不使用 `dataclass`。
+7. 配置统一使用 `.env` 与 `pydantic-settings` 加载和校验。
