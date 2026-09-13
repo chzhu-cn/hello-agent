@@ -1,2 +1,4 @@
 def main() -> None:
-    print("Hello from hello-agent!")
+    from hello_agent.sdk.p00_basics.single_call import main as run
+
+    run()

@@ -19,9 +19,13 @@ class LLMConfig(BaseSettings):
 
     model: str = Field(min_length=1, description="模型名称")
     api_key: SecretStr = Field(min_length=1, description="模型服务的 API Key")
-    base_url: HttpUrl | None = Field(default=None, description="留空时使用 SDK 默认地址")
-    timeout: float = Field(default=30.0, gt=0, allow_inf_nan=False, description="请求超时，单位秒")
+    base_url: HttpUrl | None = Field(
+        default=None, description="留空时使用 SDK 默认地址"
+    )
+    timeout: float = Field(
+        default=30.0, gt=0, allow_inf_nan=False, description="请求超时，单位秒"
+    )
+
 
 llm_config = LLMConfig()
-
-logger.success("Load LLM config: {}", llm_config)
+logger.success("Successfully load LLM config: {}", llm_config)
