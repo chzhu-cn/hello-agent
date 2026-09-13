@@ -38,3 +38,11 @@ uv run python -m hello_agent.sdk.p01_react.agent
 ```
 
 默认连续计算 (127 + 358) + 96。通过 `.env` 中的 `AGENT_MAX_STEPS=5` 设置最大模型请求次数。说明与停止策略见 [P1 学习文档](docs/patterns/p01_react.md)。
+
+## P2：先规划再执行
+
+```sh
+uv run python -m hello_agent.sdk.p02_plan_execute.agent
+```
+
+先生成带步骤引用的 JSON 计划，再执行共享 add 并汇总。配置 `PLAN_MAX_STEPS=5`、`PLAN_MAX_REPAIRS=1`。详见 [P2 学习文档](docs/patterns/p02_plan_execute.md)。
