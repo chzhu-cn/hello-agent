@@ -157,3 +157,31 @@ Token 是模型处理文本时使用的分片单位，不能直接等同于一�
 | 遇到的问题与解决方式 | 待实验后记录 |
 
 P0 的工具调用部分会在后续学习步骤补充。当前下一步是回顾请求与响应字段，再进入工具调用学习。
+
+## 9. 单次工具调用：add
+
+新增入口：`src/hello_agent/sdk/p00_basics/tool_call.py`。本步提供 `add(a, b)`，接受 -1e100 至 1e100 的有限数字；使用浮点加法，不用于精确财务计算。参数约束与 JSON Schema 统一由 Pydantic 的 `AddArguments` 定义。
+
+```sh
+uv run python -m hello_agent.sdk.p00_basics.tool_call
+uv run python -m hello_agent.sdk.p00_basics.tool_call "你好，请介绍一下自己"
+```
+
+默认输入是“请使用工具计算 127 加 358。”，预期工具结果为 485。首次请求使用 `tool_choice="auto"`，允许直接回答；直接回答不代表工具链验收通过。
+
+数据流与关键字段：
+
+1. `messages` 保存用户输入；`tools` 向模型描述函数名称、用途和参数。
+2. `choices[0].message.tool_calls` 是模型的调用请求。`function.arguments` 是 JSON 字符串，用 `model_validate_json` 解析和校验，程序只执行已注册的 `add`。
+3. 保留包含工具请求的 assistant 消息，将 Python 结果作为 `role="tool"` 消息追加。`tool_call_id` 必须对应原调用的 `id`。
+4. 第二次请求携带完整消息，使用 `tool_choice="none"` 请求最终回答，从 `message.content` 读取文本；`finish_reason="stop"` 表示正常结束。
+
+模型负责提出调用请求，Python 执行函数。接口依据 [OpenAI Function calling 文档](https://developers.openai.com/api/docs/guides/function-calling)。
+
+本步执行边界：最多执行一个工具、发送两次模型请求，SDK 自动重试关闭。未知工具、无效 JSON、参数类型或范围错误、多调用、空回复均停止并报告错误。第二次响应若继续请求工具也停止；P1 再引入循环。参数错误目前直接结束，不回传模型修复。
+
+离线验证：`uv run python -m unittest discover -s tests`。2026-09-13 五项测试通过，覆盖结果关联、直接回答、无效调用不执行、禁止第三次请求与空回答。
+
+真实验证（2026-09-13）：使用现有兼容服务与 gemini-2.5-flash，默认输入触发 add，参数 a=127.0、b=358.0，Python 返回 485.0；第二次模型回复为“127 加 358 的计算结果是 **485**。”，程序正常退出。沙箱内首次连接失败，获准联网后验证成功。
+
+Schema 组织：工具参数、结果模型与 ADD_TOOL 位于 `src/hello_agent/schemas/tools.py`；配置模型位于 `src/hello_agent/schemas/config.py`。业务调用只导入这些定义，配置实例仍在 `config/settings.py` 初始化。
