@@ -185,3 +185,5 @@ uv run python -m hello_agent.sdk.p00_basics.tool_call "你好，请介绍一下�
 真实验证（2026-09-13）：使用现有兼容服务与 gemini-2.5-flash，默认输入触发 add，参数 a=127.0、b=358.0，Python 返回 485.0；第二次模型回复为“127 加 358 的计算结果是 **485**。”，程序正常退出。沙箱内首次连接失败，获准联网后验证成功。
 
 Schema 组织：工具参数、结果模型与 ADD_TOOL 位于 `src/hello_agent/schemas/tools.py`；配置模型位于 `src/hello_agent/schemas/config.py`。业务调用只导入这些定义，配置实例仍在 `config/settings.py` 初始化。
+
+P0 学习回顾（2026-09-13）：用户已解释模型提出请求、runtime 执行工具，以及无状态请求需要上下文；已补充 tool_call_id 关联请求与结果，tool_choice=none 仅禁止当前请求调用工具。后续进入 P1，用最大步数控制循环。

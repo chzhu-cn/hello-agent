@@ -8,14 +8,9 @@ from pydantic import ValidationError
 
 from hello_agent.config.settings import llm_config
 from hello_agent.schemas.tools import ADD_TOOL, AddArguments, AddResult
+from hello_agent.tools.arithmetic import add
 
 config = llm_config
-
-
-
-def add(a: float, b: float) -> float:
-    return a + b
-
 
 
 def run(client: OpenAI, prompt: str) -> str:

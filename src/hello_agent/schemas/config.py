@@ -24,3 +24,14 @@ class LLMConfig(BaseSettings):
     timeout: float = Field(
         default=30.0, gt=0, allow_inf_nan=False, description="请求超时，单位秒"
     )
+
+
+class AgentConfig(BaseSettings):
+    """Agent 执行限制，每一步表示一次模型请求。"""
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_prefix="AGENT_",
+        extra="ignore", hide_input_in_errors=True,
+    )
+
+    max_steps: int = Field(default=5, ge=1, le=100)

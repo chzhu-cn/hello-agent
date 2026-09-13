@@ -30,3 +30,11 @@ uv run python -m hello_agent.sdk.p00_basics.tool_call
 默认请求模型使用工具计算 127 + 358。日志依次显示模型请求、Python 执行参数与结果、模型最终回答。仅支持一个工具调用，最多两次模型请求。
 
 离线验证：`uv run python -m unittest discover -s tests`。
+
+## P1：连续工具调用
+
+```sh
+uv run python -m hello_agent.sdk.p01_react.agent
+```
+
+默认连续计算 (127 + 358) + 96。通过 `.env` 中的 `AGENT_MAX_STEPS=5` 设置最大模型请求次数。说明与停止策略见 [P1 学习文档](docs/patterns/p01_react.md)。

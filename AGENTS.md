@@ -10,9 +10,11 @@
 
 ## 已确认的代码偏好
 
-- 配置在配置模块中统一创建模块级实例（如 `llm_config = LLMConfig()`），业务模块直接导入复用。
+- 所有配置实例集中在 `src/hello_agent/config/settings.py` 中统一初始化并记录加载日志（如 `llm_config`、`agent_config`），业务模块直接导入复用，不按配置类型拆分初始化模块。配置模型仍在 `schemas` 目录下按类别组织。
 - 当前学习示例保持直接、简洁；配置无效时由 Pydantic 在初始化时报告，不额外包装一层字段错误处理。
 - 配置加载成功使用 logly 记录；密钥保持 SecretStr 脱敏，不调用 get_secret_value() 写入日志。
 - 保留用户调整后的多行参数排版，避免无关的风格重写。
 
 - 所有 Schema（参数、结果、配置等 Pydantic 模型及工具 JSON Schema）统一放在 `src/hello_agent/schemas/` 下，按功能归类；业务文件仅导入使用，不内嵌定义。配置实例仍在配置模块中统一初始化。
+
+- 多个学习步骤共用的工具函数提取到 `src/hello_agent/tools/`，按功能归类并复用；工具实现与 `schemas` 中的数据定义分开。
