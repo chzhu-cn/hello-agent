@@ -1,51 +1,150 @@
 # Hello Agent
 
-E01-A 多轮会话体验：`uv run python -m hello_agent.sdk.e01_memory.agent --interactive`。
-输入 `/new` 新建会话，`/exit` 退出；固定演示不加 `--interactive`。详见 [学习文档](docs/e01_memory.md)。
+一个逐步学习 AI Agent 开发的 Python 实践项目：先用模型 SDK 手写执行流程，理解消息、工具、计划、检查和角色交接，再用框架实现相同案例进行对照。
 
-以 OpenAI 兼容接口体验一次模型调用。从项目根目录运行。
+技术路线：**SDK 手写 → SDK 扩展实验 → Pydantic AI → LangChain → LangGraph**。当前使用 OpenAI Python SDK 调用 OpenAI 兼容的 Chat Completions 接口，模型与服务地址由配置决定。
 
-1. 安装依赖：`uv sync`。
-2. 如果没有 `.env`，复制 `.env.example` 为 `.env`；已有文件直接编辑，不要覆盖。
-3. 填写服务提供的 `LLM_BASE_URL`、`LLM_MODEL` 和 `LLM_API_KEY`。基础地址不要包含 `/chat/completions`；示例域名需要替换。`LLM_TIMEOUT` 默认 30 秒。
-4. 运行：
+## 当前进度
+
+截至 2026-09-14，SDK 的 P0–P4 已实现并有验证记录；当前推进 E01 Memory，已实现 E01-A 进程内会话，离线测试和真实固定演示通过。交互体验与学习回顾仍列在任务清单中，历史持久化和偏好管理尚未实现。
+
+| 学习项 | 当前能力 | 学习记录 |
+| --- | --- | --- |
+| P0 基础调用 | 单次文本请求；一次 add 工具调用与结果回传 | [P0](docs/patterns/p00_basics.md) |
+| P1 ReAct 风格循环 | 连续工具调用、消息历史、参数校验和请求步数上限 | [P1](docs/patterns/p01_react.md) |
+| P2 Plan-and-Execute | 生成依赖计划、执行前有限修正、Python 执行与模型汇总 | [P2](docs/patterns/p02_plan_execute.md) |
+| P3 Reflection / Critique | 固定计算记录、初稿、结构化检查、有限修改与复查 | [P3](docs/patterns/p03_reflection.md) |
+| P4 多 Agent 协作 | 协调者一次委派，计算者独立工具循环，返回后汇总 | [P4](docs/patterns/p04_multi_agent.md) |
+| E01-A 进程内会话 | 连续文本对话、会话隔离、失败轮不写入历史 | [E01-A](docs/e01_memory.md) |
+
+P 表示 Pattern（执行模式），E 表示 Extension（扩展能力）；`P1` 与目录中的 `p01` 是同一编号，`E01-A` 是 E01 的第一个小实验。这是本项目的学习编号。
+
+后续 E01-B/C、E02–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
+
+## 安装与配置
+
+准备 Python 3.14 和 uv，以下命令均在项目根目录执行。
+
+```sh
+uv sync
+```
+
+如果没有 `.env`，复制 `.env.example` 为 `.env`；已有配置直接编辑。填写服务提供的模型名称、密钥和 API 基础地址。基础地址不要包含 `/chat/completions`，示例域名需要替换。
+
+| 环境变量 | 默认值 | 用途 |
+| --- | --- | --- |
+| `LLM_MODEL` | 必填 | 模型名称 |
+| `LLM_API_KEY` | 必填 | 服务密钥，使用 SecretStr 脱敏 |
+| `LLM_BASE_URL` | 运行入口要求配置 | OpenAI 兼容 API 基础地址 |
+| `LLM_TIMEOUT` | `30` | 单次请求超时，单位秒，必须大于 0 |
+| `AGENT_MAX_STEPS` | `5` | P1 每次任务最大模型请求次数，1–100 |
+| `PLAN_MAX_STEPS` | `5` | P2 最大计划步骤数，1–100 |
+| `PLAN_MAX_REPAIRS` | `1` | P2 无效计划最大修正次数，0–2 |
+| `REFLECTION_MAX_REVISIONS` | `1` | P3 最大答案修改次数，0–2；每次修改后复查 |
+| `COOP_WORKER_MAX_STEPS` | `5` | P4 计算者最大模型请求次数，1–100 |
+
+默认值来自配置模型，实际运行受 `.env` 或环境变量覆盖。配置统一在 `config/settings.py` 导入时初始化；配置无效由 Pydantic 直接报告。日志使用 logly，SDK 自动重试关闭。工具调用示例要求所选模型服务支持工具调用；P2/P3/P4 还包含需要本地校验的 JSON 输出。
+
+## 运行示例
+
+### P0：单次模型调用与工具调用
 
 ```sh
 uv run hello-agent
-# 或提供自己的输入
 uv run hello-agent "用一句话解释什么是工具调用"
-```
-
-程序发送一条用户消息，等待完整回复，通过 logly 输出后退出。没有多轮历史或工具调用；关闭 SDK 自动重试。配置在模块导入时统一初始化，配置无效时由 Pydantic 直接报告；请求失败或没有文本时以状态码 1 退出。
-
-调用入口：`src/hello_agent/sdk/p00_basics/single_call.py`。
-
-2026-09-13：Python 3.14 环境已安装 openai 3.13.0。用户确认修改后的代码已跑通真实模型调用；此前已验证受控响应的文本提取与空响应退出。具体模型与回复原文未收录。
-
-## 体验加法工具
-
-使用同一份 `.env` 配置运行：
-
-```sh
 uv run python -m hello_agent.sdk.p00_basics.tool_call
 ```
 
-默认请求模型使用工具计算 127 + 358。日志依次显示模型请求、Python 执行参数与结果、模型最终回答。仅支持一个工具调用，最多两次模型请求。
+`hello-agent` 仍指向 P0 单次文本调用，发送输入后输出回复并退出。工具示例请求计算 `127 + 358`，最多执行一个工具、发送两次模型请求，预期结果为 `485`。
 
-离线验证：`uv run python -m unittest discover -s tests`。
-
-## P1：连续工具调用
+### P1：连续工具调用
 
 ```sh
 uv run python -m hello_agent.sdk.p01_react.agent
 ```
 
-默认连续计算 (127 + 358) + 96。通过 `.env` 中的 `AGENT_MAX_STEPS=5` 设置最大模型请求次数。说明与停止策略见 [P1 学习文档](docs/patterns/p01_react.md)。
+默认先计算 `127 + 358`，收到工具结果后再加 `96`，预期得到 `581`。支持在命令末尾传入自定义任务字符串。程序维护一次任务内部的消息历史，模型给出最终回答或达到请求上限时停止。
 
-## P2：先规划再执行
+### P2：先规划再执行
 
 ```sh
 uv run python -m hello_agent.sdk.p02_plan_execute.agent
 ```
 
-先生成带步骤引用的 JSON 计划，再执行共享 add 并汇总。配置 `PLAN_MAX_STEPS=5`、`PLAN_MAX_REPAIRS=1`。详见 [P2 学习文档](docs/patterns/p02_plan_execute.md)。
+默认执行相同的两步加法，也支持自定义任务字符串。模型生成包含步骤依赖的计划，Python 校验并执行，模型再汇总结果。无效计划只能在执行前有限修正，执行失败不自动重跑整个计划。
+
+### P3：检查与有限修改
+
+```sh
+uv run python -m hello_agent.sdk.p03_reflection.agent
+```
+
+Python 先完成固定两步加法，再让模型生成初稿、检查并按额度修改。修改不会重跑工具。检查通过不保证事实正确：已有错误工具依据实验出现修正失败和误判通过，详情见 P3 学习记录。
+
+### P4：一次委派与返回
+
+```sh
+uv run python -m hello_agent.sdk.p04_multi_agent.agent
+```
+
+协调者将固定计算任务委派给计算者，计算者通过 add 完成计算并返回记录，协调者汇总。两个角色使用独立消息历史和不同工具权限，可以共用同一模型。日志展示角色交接、请求次数、工具结果及停止状态。
+
+### E01-A：进程内多轮会话
+
+```sh
+# 固定演示：告知偏好、追问、新建会话再次询问
+uv run python -m hello_agent.sdk.e01_memory.agent
+
+# 交互体验
+uv run python -m hello_agent.sdk.e01_memory.agent --interactive
+```
+
+先输入“我最喜欢青绿色”，再问“我最喜欢什么颜色？”。输入 `/new` 新建空会话，`/exit` 退出。每轮将当前会话全部历史再次发送给模型，成功后保存用户输入和助手回复；失败轮不写入历史，也不自动重试。
+
+本步为纯文本会话，没有工具调用。历史仅保存在当前进程内，退出后丢失；尚无历史持久化、摘要或输入预算控制。
+
+## 验证与已观察到的结果
+
+运行离线测试，无需调用真实模型服务：
+
+```sh
+uv run python -m unittest discover -s tests
+```
+
+测试使用受控响应，覆盖工具校验、循环停止、计划修正、检查修改、角色交接、响应清理，以及会话历史与失败边界。最近一次 E01-A 实现后的完整离线测试集通过。
+
+真实模型记录与离线测试分开维护：
+
+- P4 与 P1 使用同一固定任务，均正确得到 `581`；P4 为 5 次模型请求、16.93 秒，P1 为 3 次、6.71 秒，均执行两次工具。单次耗时不代表稳定性能。
+- E01-A 会话 A 的追问正确得到“青绿色”；新会话 B 回答“不知道”。共 3 次模型请求，没有工具执行。
+- P3 的模型检查可能误判，不能用“检查通过”代替原始任务的事实验收。
+
+更完整的输入、失败场景和观察结果见各学习文档。
+
+## 代码组织
+
+```text
+src/hello_agent/
+├── config/settings.py       # 统一初始化配置实例
+├── schemas/                 # Pydantic 参数、结果、配置模型与工具 Schema
+├── tools/                   # 共用加法与模型请求函数
+└── sdk/
+    ├── p00_basics/          # 单次调用与一次工具调用
+    ├── p01_react/           # 工具循环
+    ├── p02_plan_execute/    # 规划与执行
+    ├── p03_reflection/      # 检查与修改
+    ├── p04_multi_agent/     # 委派与返回
+    └── e01_memory/          # 进程内文本会话
+tests/                      # 离线受控响应测试
+docs/                       # 需求、路线、进度和实验记录
+```
+
+当前实际依赖为 openai、logly、Pydantic 和 pydantic-settings，由 uv 管理。业务模块导入 schemas 中的数据定义，共用工具放在 tools 中；各学习入口保留为独立示例。
+
+## 学习文档
+
+- [需求文档](docs/requirements.md)：项目目标、范围与验收原则。
+- [技术学习路线](docs/technical-roadmap.md)：P0–P4 与框架对照安排。
+- [任务清单](docs/tasks.md)：当前阶段、待办和验证记录。
+- [SDK 扩展学习计划](docs/sdk-learning-plan.md)：E01–E13 的顺序与最小实验。
+- [协作约定](AGENTS.md)：代码组织、依赖选择与学习节奏。
