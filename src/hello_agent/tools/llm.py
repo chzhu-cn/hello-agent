@@ -3,6 +3,7 @@
 import re
 
 from openai import OpenAI
+from openai.types.chat import ChatCompletionMessage
 
 from hello_agent.config.settings import llm_config
 
@@ -33,14 +34,24 @@ def _clean_response(text: str) -> str:
     return text
 
 
-def request_text(client: OpenAI, messages: list) -> str:
-    response = client.chat.completions.create(model=llm_config.model, messages=messages)
+def request_message(client: OpenAI, messages: list, tools: list | None = None) -> ChatCompletionMessage:
+    options = {"tools": tools, "tool_choice": "auto"} if tools else {}
+    response = client.chat.completions.create(model=llm_config.model, messages=messages, **options)
     if not response.choices:
         raise ValueError("模型未返回 choices。")
     choice = response.choices[0]
-    if choice.finish_reason != "stop" or choice.message.tool_calls:
+    message = choice.message
+    if message.tool_calls:
+        if not tools or choice.finish_reason != "tool_calls":
+            raise ValueError("模型没有正常完成工具响应。")
+        return message
+    if choice.finish_reason != "stop":
         raise ValueError("模型没有正常完成文本响应。")
-    text = choice.message.content
+    text = message.content
     if not text or not text.strip():
         raise ValueError("模型返回空文本。")
-    return _clean_response(text)
+    return message.model_copy(update={"content": _clean_response(text)})
+
+
+def request_text(client: OpenAI, messages: list) -> str:
+    return request_message(client, messages).content
