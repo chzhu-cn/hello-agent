@@ -1,5 +1,8 @@
 # Hello Agent
 
+E01-A 多轮会话体验：`uv run python -m hello_agent.sdk.e01_memory.agent --interactive`。
+输入 `/new` 新建会话，`/exit` 退出；固定演示不加 `--interactive`。详见 [学习文档](docs/e01_memory.md)。
+
 以 OpenAI 兼容接口体验一次模型调用。从项目根目录运行。
 
 1. 安装依赖：`uv sync`。
