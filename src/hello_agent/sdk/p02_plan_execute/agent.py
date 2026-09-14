@@ -12,6 +12,7 @@ from hello_agent.config.settings import llm_config, planning_config
 from hello_agent.schemas.planning import Plan, StepReference, StepResult
 from hello_agent.schemas.tools import AddArguments
 from hello_agent.tools.arithmetic import add
+from hello_agent.tools.llm import request_text
 
 
 def execute(plan: Plan) -> list[StepResult]:
@@ -30,19 +31,6 @@ def execute(plan: Plan) -> list[StepResult]:
         records.append(StepResult(step=step.id, result=result))
         logger.info("步骤 {} 结果：{}", step.id, result)
     return records
-
-
-def request_text(client: OpenAI, messages: list) -> str:
-    response = client.chat.completions.create(model=llm_config.model, messages=messages)
-    if not response.choices:
-        raise ValueError("模型未返回 choices。")
-    choice = response.choices[0]
-    if choice.finish_reason != "stop" or choice.message.tool_calls:
-        raise ValueError("模型没有正常完成文本响应。")
-    text = choice.message.content
-    if not text or not text.strip():
-        raise ValueError("模型返回空文本。")
-    return text
 
 
 def run(client: OpenAI, prompt: str) -> str:

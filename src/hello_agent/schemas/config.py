@@ -45,3 +45,12 @@ class PlanningConfig(BaseSettings):
 
     max_steps: int = Field(default=5, ge=1, le=100)
     max_repairs: int = Field(default=1, ge=0, le=2)
+
+
+class ReflectionConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_prefix="REFLECTION_",
+        extra="ignore", hide_input_in_errors=True,
+    )
+
+    max_revisions: int = Field(default=1, ge=0, le=2)
