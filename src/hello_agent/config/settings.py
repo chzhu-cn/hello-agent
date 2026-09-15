@@ -6,6 +6,7 @@ from hello_agent.schemas.config import LLMConfig
 from hello_agent.schemas.config import AgentConfig, PlanningConfig
 from hello_agent.schemas.config import ReflectionConfig
 from hello_agent.schemas.config import CooperationConfig
+from hello_agent.schemas.config import MemoryConfig
 
 
 llm_config = LLMConfig()
@@ -23,3 +24,6 @@ logger.success("Successfully load reflection config: {}", reflection_config)
 
 cooperation_config = CooperationConfig()
 logger.success("Successfully load cooperation config: {}", cooperation_config)
+
+memory_config = MemoryConfig()
+logger.success("Successfully load memory config: {}", memory_config)

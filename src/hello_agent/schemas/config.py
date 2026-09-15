@@ -1,5 +1,7 @@
 """环境配置模型与校验约束。"""
 
+from pathlib import Path
+
 from pydantic import Field, HttpUrl, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -63,3 +65,12 @@ class CooperationConfig(BaseSettings):
     )
 
     worker_max_steps: int = Field(default=5, ge=1, le=100)
+
+
+class MemoryConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_prefix="MEMORY_",
+        extra="ignore", hide_input_in_errors=True,
+    )
+
+    directory: Path = Path(".local/sessions")
