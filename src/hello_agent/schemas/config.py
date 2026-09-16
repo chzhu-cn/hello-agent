@@ -74,3 +74,12 @@ class MemoryConfig(BaseSettings):
     )
 
     directory: Path = Path(".local/sessions")
+
+
+class ContextConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_prefix="CONTEXT_",
+        extra="ignore", hide_input_in_errors=True,
+    )
+
+    recent_turns: int = Field(default=2, ge=0, le=100)

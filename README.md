@@ -6,7 +6,7 @@
 
 ## 当前进度
 
-截至 2026-09-16，SDK 的 P0–P4 已实现并有验证记录；当前推进 E01 Memory。E01-B 已通过真实模型重启恢复与隔离验证；E01-C 独立偏好管理已实现并通过离线测试，验证与回顾见 E01 学习记录。
+截至 2026-09-16，SDK 的 P0–P4 已实现并有验证记录；E01-B/C 已有离线和真实模型验证，当前推进 E02-A 全量历史与最近几轮对照。
 
 | 学习项 | 当前能力 | 学习记录 |
 | --- | --- | --- |
@@ -19,7 +19,7 @@
 
 P 表示 Pattern（执行模式），E 表示 Extension（扩展能力）；`P1` 与目录中的 `p01` 是同一编号，`E01-A` 是 E01 的第一个小实验。这是本项目的学习编号。
 
-后续 E02–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
+E02-A 已实现全量历史与最近几轮对照；摘要与预算、E03–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
 
 ## 安装与配置
 
@@ -120,6 +120,15 @@ uv run python -m hello_agent.sdk.e01_memory.preferences --profile demo --delete 
 ```
 
 再次设置同名键即可更新；`--show` 查看当前档案。偏好保存在 `MEMORY_DIRECTORY` 下的独立文件。提问只发送当前偏好和问题，不携带旧聊天；删除偏好不会擦除旧会话中的文字。完整实验见 [E01 学习记录](docs/e01_memory.md)。
+
+### E02-A：全量历史与最近几轮
+
+```sh
+uv run python -m hello_agent.sdk.e02_context.agent --preview
+uv run python -m hello_agent.sdk.e02_context.agent
+```
+
+第一条仅展示消息，第二条发起两次模型请求。窗口默认保留最近两轮，可在 `.env` 设置 `CONTEXT_RECENT_TURNS`。原始历史不会被裁剪覆盖；详见 [E02 学习记录](docs/e02_context.md)。
 
 ## 验证与已观察到的结果
 
