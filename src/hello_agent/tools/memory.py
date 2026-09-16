@@ -23,6 +23,12 @@ def load_session(directory: Path, name: str) -> Conversation:
 def save_session(directory: Path, name: str, session: Conversation) -> None:
     path = session_path(directory, name)
     content = Conversation.model_validate(session.model_dump()).model_dump_json(indent=2)
+    write_memory_json(path, content)
+
+
+def write_memory_json(path: Path, content: str) -> None:
+    """完整写入临时文件后替换目标；失败时清理临时文件。"""
+    directory = path.parent
     directory.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:

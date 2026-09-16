@@ -1,8 +1,8 @@
 """E01-A：进程内文本会话的数据定义。"""
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 
 class ConversationMessage(BaseModel):
@@ -25,3 +25,16 @@ class Conversation(BaseModel):
 
 class SessionKey(BaseModel):
     name: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
+
+
+PreferenceKey = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
+PreferenceValue = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+
+
+class Preferences(BaseModel):
+    values: dict[PreferenceKey, PreferenceValue] = Field(default_factory=dict, max_length=50)
+
+
+class PreferenceChange(BaseModel):
+    key: PreferenceKey
+    value: PreferenceValue | None = None

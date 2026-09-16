@@ -6,7 +6,7 @@
 
 ## 当前进度
 
-截至 2026-09-15，SDK 的 P0–P4 已实现并有验证记录；当前推进 E01 Memory。E01-A 进程内会话已通过离线测试和真实固定演示；E01-B 历史持久化已实现并通过离线测试，真实交互体验与学习回顾待完成。偏好管理尚未实现。
+截至 2026-09-16，SDK 的 P0–P4 已实现并有验证记录；当前推进 E01 Memory。E01-B 已通过真实模型重启恢复与隔离验证；E01-C 独立偏好管理已实现并通过离线测试，验证与回顾见 E01 学习记录。
 
 | 学习项 | 当前能力 | 学习记录 |
 | --- | --- | --- |
@@ -19,7 +19,7 @@
 
 P 表示 Pattern（执行模式），E 表示 Extension（扩展能力）；`P1` 与目录中的 `p01` 是同一编号，`E01-A` 是 E01 的第一个小实验。这是本项目的学习编号。
 
-后续 E01-C、E02–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
+后续 E02–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
 
 ## 安装与配置
 
@@ -111,6 +111,16 @@ uv run python -m hello_agent.sdk.e01_memory.agent --interactive --session colors
 
 退出后用相同命令恢复历史。默认保存到 `.local/sessions`，可用 `.env` 的 `MEMORY_DIRECTORY` 修改。每轮成功后保存；`/new` 生成并显示新会话名称，保留旧文件。文件损坏时明确退出，不覆盖历史。仅支持单进程依次写入同一会话，详见 [E01 学习记录](docs/e01_memory.md)。
 
+### E01-C：独立偏好档案
+
+```sh
+uv run python -m hello_agent.sdk.e01_memory.preferences --profile demo --set 颜色 青绿色
+uv run python -m hello_agent.sdk.e01_memory.preferences --profile demo --ask "我最喜欢什么颜色？"
+uv run python -m hello_agent.sdk.e01_memory.preferences --profile demo --delete 颜色
+```
+
+再次设置同名键即可更新；`--show` 查看当前档案。偏好保存在 `MEMORY_DIRECTORY` 下的独立文件。提问只发送当前偏好和问题，不携带旧聊天；删除偏好不会擦除旧会话中的文字。完整实验见 [E01 学习记录](docs/e01_memory.md)。
+
 ## 验证与已观察到的结果
 
 运行离线测试，无需调用真实模型服务：
@@ -119,7 +129,7 @@ uv run python -m hello_agent.sdk.e01_memory.agent --interactive --session colors
 uv run python -m unittest discover -s tests
 ```
 
-测试使用受控响应，覆盖工具校验、循环停止、计划修正、检查修改、角色交接、响应清理，以及会话历史与失败边界。最近一次 E01-A 实现后的完整离线测试集通过。
+测试使用受控响应，覆盖工具校验、循环停止、计划修正、检查修改、角色交接、响应清理，以及会话历史、偏好管理与失败边界。最近一次 E01-C 实现后的完整离线测试集通过。
 
 真实模型记录与离线测试分开维护：
 
