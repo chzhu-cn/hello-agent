@@ -4,6 +4,12 @@ from hello_agent.schemas.context import ContextPolicy
 from hello_agent.schemas.memory import Conversation, ConversationMessage
 
 
+def split_history(history: Conversation, policy: ContextPolicy) -> tuple[Conversation, Conversation]:
+    validated = Conversation.model_validate(history.model_dump())
+    cut = max(0, len(validated.messages) - 2 * policy.recent_turns)
+    return Conversation(messages=validated.messages[:cut]), Conversation(messages=validated.messages[cut:])
+
+
 def build_messages(
     history: Conversation, prompt: str, system_prompt: str, policy: ContextPolicy,
 ) -> list[dict[str, str]]:
