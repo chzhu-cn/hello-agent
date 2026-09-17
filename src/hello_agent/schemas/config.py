@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pydantic import Field, HttpUrl, SecretStr
+from pydantic import Field, HttpUrl, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -83,3 +83,20 @@ class ContextConfig(BaseSettings):
     )
 
     recent_turns: int = Field(default=2, ge=0, le=100)
+
+
+class BudgetConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_prefix="BUDGET_",
+        extra="ignore", hide_input_in_errors=True,
+    )
+
+    context_tokens: int = Field(default=640, gt=0)
+    output_tokens: int = Field(default=128, gt=0)
+    safety_tokens: int = Field(default=64, ge=0)
+
+    @model_validator(mode="after")
+    def input_room(self) -> "BudgetConfig":
+        if self.context_tokens <= self.output_tokens + self.safety_tokens:
+            raise ValueError("总预算必须大于输出预留与安全余量之和")
+        return self

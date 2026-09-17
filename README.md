@@ -19,7 +19,7 @@
 
 P 表示 Pattern（执行模式），E 表示 Extension（扩展能力）；`P1` 与目录中的 `p01` 是同一编号，`E01-A` 是 E01 的第一个小实验。这是本项目的学习编号。
 
-E02-A/B 已实现全量历史、最近几轮和旧历史摘要对照；输入预算、E03–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
+E02-A/B 已实现全量历史、最近几轮和旧历史摘要对照；E02-C 已实现本地估算预算与输出预留实验，尚非精确模型计数。E03–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
 
 ## 安装与配置
 
@@ -131,6 +131,8 @@ uv run python -m hello_agent.sdk.e02_context.agent
 第一条仅展示消息，第二条发起两次模型请求。窗口默认保留最近两轮，可在 `.env` 设置 `CONTEXT_RECENT_TURNS`。原始历史不会被裁剪覆盖；详见 [E02 学习记录](docs/e02_context.md)。
 
 ## 验证与已观察到的结果
+
+E02-C：`uv run python -m hello_agent.sdk.e02_context.budget --preview` 预览预算，去掉 `--preview` 发起一次请求。使用 `BUDGET_CONTEXT_TOKENS`、`BUDGET_OUTPUT_TOKENS`、`BUDGET_SAFETY_TOKENS` 配置本地估算额度；超过输入额度裁掉最早完整轮次，输出预留传为 `max_tokens`。估算不等于实际 token，详见 E02 学习记录。
 
 E02-B 摘要对照入口：`uv run python -m hello_agent.sdk.e02_context.summary`。默认共 4 次模型请求，日志展示旧历史、模型生成的摘要与最终请求。原 E02-A 入口仍只比较全量与窗口。摘要可能遗漏或失真，且不保证比短原文更短，详见 [E02 学习记录](docs/e02_context.md)。
 

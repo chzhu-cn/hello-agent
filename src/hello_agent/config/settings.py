@@ -8,6 +8,7 @@ from hello_agent.schemas.config import ReflectionConfig
 from hello_agent.schemas.config import CooperationConfig
 from hello_agent.schemas.config import MemoryConfig
 from hello_agent.schemas.config import ContextConfig
+from hello_agent.schemas.config import BudgetConfig
 
 
 llm_config = LLMConfig()
@@ -31,3 +32,6 @@ logger.success("Successfully load memory config: {}", memory_config)
 
 context_config = ContextConfig()
 logger.success("Successfully load context config: {}", context_config)
+
+budget_config = BudgetConfig()
+logger.success("Successfully load budget config: {}", budget_config)

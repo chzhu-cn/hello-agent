@@ -4,6 +4,7 @@ import re
 
 from openai import OpenAI
 from openai.types.chat import ChatCompletionMessage
+from logly import logger
 
 from hello_agent.config.settings import llm_config
 
@@ -34,9 +35,13 @@ def _clean_response(text: str) -> str:
     return text
 
 
-def request_message(client: OpenAI, messages: list, tools: list | None = None) -> ChatCompletionMessage:
+def request_message(client: OpenAI, messages: list, tools: list | None = None, *, max_tokens: int | None = None) -> ChatCompletionMessage:
     options = {"tools": tools, "tool_choice": "auto"} if tools else {}
+    if max_tokens is not None:
+        options["max_tokens"] = max_tokens
     response = client.chat.completions.create(model=llm_config.model, messages=messages, **options)
+    if max_tokens is not None:
+        logger.info("服务返回 usage：{}", response.usage.model_dump_json() if response.usage else "未提供")
     if not response.choices:
         raise ValueError("模型未返回 choices。")
     choice = response.choices[0]
@@ -53,5 +58,5 @@ def request_message(client: OpenAI, messages: list, tools: list | None = None) -
     return message.model_copy(update={"content": _clean_response(text)})
 
 
-def request_text(client: OpenAI, messages: list) -> str:
-    return request_message(client, messages).content
+def request_text(client: OpenAI, messages: list, *, max_tokens: int | None = None) -> str:
+    return request_message(client, messages, max_tokens=max_tokens).content
