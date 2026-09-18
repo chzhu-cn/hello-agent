@@ -14,6 +14,12 @@
 
 ## 维护方式
 
+- 2026-09-18：按用户要求将 `tests/manual_logly_json_bad_case.py` 简化为普通脚本，移除 unittest 和子进程；用 print 展示原文、logly 展示实际输出。运行正常退出，仍复现数组和方括号内容丢失；不再使用断言或失败退出码。
+
+- 2026-09-18：新增 `tests/manual_logly_json_bad_case.py` 最小断言反例，独立子进程调用 `logger.info("payload=\n{}", json.dumps(..., indent=2))`，显式 stdout sink 且 colorize=False。实测 1 项失败、退出码 1：messages 数组及字符串中的 `[hello]` 均丢失。测试断言正确行为，不将当前缺陷作为通过条件；独立运行，不加入默认测试发现。未修复业务代码。
+
+- 2026-09-18：暂停学习步骤推进，新增 `tests/manual_logly_json.py` 独立复现脚本。logly 0.2.2 实测：占位符传入 JSON 的默认文本输出完整；f-string JSON 触发 KeyError；bind 字典配合 serialize/pretty_json 时 payload 被字符串化且嵌套列表内容消失。仅记录复现，未修改业务日志或加入 PII 处理。
+
 - 2026-09-14：按现有代码更新 README，补齐 P0–P4、E01-A 入口、配置、验证记录和文档导航；本次仅维护文档，学习阶段未推进。
 
 - `[ ]` 表示未完成，`[x]` 表示已完成；正在进行的任务在文字后标注“进行中”。
