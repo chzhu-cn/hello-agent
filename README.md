@@ -6,7 +6,7 @@
 
 ## 当前进度
 
-截至 2026-09-16，SDK 的 P0–P4 已实现并有验证记录；E01-B/C 已有离线和真实模型验证，当前推进 E02-A 全量历史与最近几轮对照。
+截至 2026-09-18，SDK 的 P0–P4 已实现并有验证记录；E01/E02 已有分步实验，当前推进 E03-A 六题最小评估。
 
 | 学习项 | 当前能力 | 学习记录 |
 | --- | --- | --- |
@@ -19,7 +19,7 @@
 
 P 表示 Pattern（执行模式），E 表示 Extension（扩展能力）；`P1` 与目录中的 `p01` 是同一编号，`E01-A` 是 E01 的第一个小实验。这是本项目的学习编号。
 
-E02-A/B 已实现全量历史、最近几轮和旧历史摘要对照；E02-C 已实现本地估算预算与输出预留实验，尚非精确模型计数。E03–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
+E02 已实现全量、窗口、摘要及本地估算预算和工具历史整轮裁剪，尚非精确模型计数。E03-A 已实现六题最小评估；完整工具轨迹评估、E04–E13 及三个框架阶段尚未实现，具体范围见 [SDK 扩展学习计划](docs/sdk-learning-plan.md)。实际完成状态以 [任务清单](docs/tasks.md) 为准。
 
 ## 安装与配置
 
@@ -131,6 +131,8 @@ uv run python -m hello_agent.sdk.e02_context.agent
 第一条仅展示消息，第二条发起两次模型请求。窗口默认保留最近两轮，可在 `.env` 设置 `CONTEXT_RECENT_TURNS`。原始历史不会被裁剪覆盖；详见 [E02 学习记录](docs/e02_context.md)。
 
 ## 验证与已观察到的结果
+
+E03-A 最小评估：`uv run python -m hello_agent.sdk.e03_evaluation.agent`。复用 E01，运行六道固定题；逐题记录是否完成、是否通过短答案规则、答案、耗时和错误类型。共六次模型请求，不用模型自评。详见 [评估学习记录](docs/e03_evaluation.md)。
 
 工具历史整轮预算实验：`uv run python -m hello_agent.sdk.e02_context.tool_budget --preview`，去掉 `--preview` 请求一次回答。调用与结果按 ID 校验并随整个用户轮次裁剪；不会重新执行预置工具。默认预算移除旧工具轮次，`BUDGET_CONTEXT_TOKENS=2000` 可保留本例全部历史。
 
