@@ -132,6 +132,8 @@ uv run python -m hello_agent.sdk.e02_context.agent
 
 ## 验证与已观察到的结果
 
+工具历史整轮预算实验：`uv run python -m hello_agent.sdk.e02_context.tool_budget --preview`，去掉 `--preview` 请求一次回答。调用与结果按 ID 校验并随整个用户轮次裁剪；不会重新执行预置工具。默认预算移除旧工具轮次，`BUDGET_CONTEXT_TOKENS=2000` 可保留本例全部历史。
+
 E02-C：`uv run python -m hello_agent.sdk.e02_context.budget --preview` 预览预算，去掉 `--preview` 发起一次请求。使用 `BUDGET_CONTEXT_TOKENS`、`BUDGET_OUTPUT_TOKENS`、`BUDGET_SAFETY_TOKENS` 配置本地估算额度；超过输入额度裁掉最早完整轮次，输出预留传为 `max_tokens`。估算不等于实际 token，详见 E02 学习记录。
 
 E02-B 摘要对照入口：`uv run python -m hello_agent.sdk.e02_context.summary`。默认共 4 次模型请求，日志展示旧历史、模型生成的摘要与最终请求。原 E02-A 入口仍只比较全量与窗口。摘要可能遗漏或失真，且不保证比短原文更短，详见 [E02 学习记录](docs/e02_context.md)。
