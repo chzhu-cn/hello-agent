@@ -22,7 +22,9 @@ def load_session(directory: Path, name: str) -> Conversation:
 
 def save_session(directory: Path, name: str, session: Conversation) -> None:
     path = session_path(directory, name)
-    content = Conversation.model_validate(session.model_dump()).model_dump_json(indent=2)
+    content = Conversation.model_validate(session.model_dump()).model_dump_json(
+        indent=2
+    )
     write_memory_json(path, content)
 
 
@@ -32,7 +34,9 @@ def write_memory_json(path: Path, content: str) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     temporary = None
     try:
-        with NamedTemporaryFile(mode="w", encoding="utf-8", dir=directory, delete=False) as stream:
+        with NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=directory, delete=False
+        ) as stream:
             temporary = Path(stream.name)
             stream.write(content)
         temporary.replace(path)

@@ -16,7 +16,9 @@ class ContextTests(unittest.TestCase):
         history = example_history()
         before = history.model_dump()
         full = build_messages(history, "问题", "系统", ContextPolicy(mode="full"))
-        window = build_messages(history, "问题", "系统", ContextPolicy(mode="window", recent_turns=2))
+        window = build_messages(
+            history, "问题", "系统", ContextPolicy(mode="window", recent_turns=2)
+        )
         self.assertEqual(full[1:-1], before["messages"])
         self.assertEqual(window[1:-1], before["messages"][-4:])
         self.assertEqual(window[0], full[0])
@@ -27,10 +29,17 @@ class ContextTests(unittest.TestCase):
 
     def test_zero_large_and_empty_windows(self):
         for turns, expected in ((0, 0), (1, 2), (4, 8), (100, 8)):
-            messages = build_messages(example_history(), "问题", "系统", ContextPolicy(mode="window", recent_turns=turns))
+            messages = build_messages(
+                example_history(),
+                "问题",
+                "系统",
+                ContextPolicy(mode="window", recent_turns=turns),
+            )
             self.assertEqual(len(messages), expected + 2)
         for mode in ("full", "window"):
-            messages = build_messages(Conversation(), "问题", "系统", ContextPolicy(mode=mode))
+            messages = build_messages(
+                Conversation(), "问题", "系统", ContextPolicy(mode=mode)
+            )
             self.assertEqual([m["role"] for m in messages], ["system", "user"])
 
     def test_invalid_input_is_rejected(self):
@@ -48,7 +57,10 @@ class ContextTests(unittest.TestCase):
 
     def test_comparison_does_not_leak_first_answer(self):
         client = MagicMock()
-        client.chat.completions.create.side_effect = [response("唯一回答标记"), response("不知道")]
+        client.chat.completions.create.side_effect = [
+            response("唯一回答标记"),
+            response("不知道"),
+        ]
         history = example_history()
         before = history.model_dump()
         with patch("hello_agent.sdk.e02_context.agent.context_config") as config:

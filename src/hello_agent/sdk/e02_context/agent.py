@@ -12,7 +12,9 @@ from hello_agent.schemas.memory import Conversation, ConversationMessage
 from hello_agent.tools.context import build_messages
 from hello_agent.tools.llm import request_text
 
-SYSTEM_PROMPT = "仅根据本次提供的对话回答。没有明确依据时说不知道，不猜测用户偏好。用简短中文回答。"
+SYSTEM_PROMPT = (
+    "仅根据本次提供的对话回答。没有明确依据时说不知道，不猜测用户偏好。用简短中文回答。"
+)
 QUESTION = "我最喜欢的颜色是什么？"
 
 
@@ -24,14 +26,16 @@ def example_history() -> Conversation:
         ("把 hello 翻译成中文。", "你好。"),
         ("给我一个整理书桌的建议。", "把书本和文具分开摆放。"),
     ]
-    return Conversation(messages=[
-        message
-        for user, assistant in turns
-        for message in (
-            ConversationMessage(role="user", content=user),
-            ConversationMessage(role="assistant", content=assistant),
-        )
-    ])
+    return Conversation(
+        messages=[
+            message
+            for user, assistant in turns
+            for message in (
+                ConversationMessage(role="user", content=user),
+                ConversationMessage(role="assistant", content=assistant),
+            )
+        ]
+    )
 
 
 def compare(client: OpenAI | None, history: Conversation) -> None:
@@ -41,28 +45,39 @@ def compare(client: OpenAI | None, history: Conversation) -> None:
         messages = build_messages(history, QUESTION, SYSTEM_PROMPT, policy)
         logger.info(
             "策略 {}：原始历史 {} 轮，发送历史 {} 轮，总消息 {} 条，正文 {} 字符（非 token）。",
-            mode, len(history.messages) // 2, (len(messages) - 2) // 2,
-            len(messages), sum(len(message["content"]) for message in messages),
+            mode,
+            len(history.messages) // 2,
+            (len(messages) - 2) // 2,
+            len(messages),
+            sum(len(message["content"]) for message in messages),
         )
         for index, message in enumerate(messages):
-            logger.info("请求消息 {} [{}]：{}", index, message["role"], message["content"])
+            logger.info(
+                "请求消息 {} [{}]：{}", index, message["role"], message["content"]
+            )
         if client is None:
             continue
         started = perf_counter()
         try:
             answer = request_text(client, messages)
             logger.success("{} 回复：{}", mode, answer)
-            logger.info("{} 模型请求 1 次，耗时 {:.2f} 秒。", mode, perf_counter() - started)
+            logger.info(
+                "{} 模型请求 1 次，耗时 {:.2f} 秒。", mode, perf_counter() - started
+            )
         except (APIError, ValueError) as exc:
             failed = True
-            logger.error("{} 请求失败（{}），不重试，继续独立对照。", mode, type(exc).__name__)
+            logger.error(
+                "{} 请求失败（{}），不重试，继续独立对照。", mode, type(exc).__name__
+            )
     if failed:
         raise SystemExit(1)
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="E02-A 全量历史与最近几轮对照")
-    parser.add_argument("--preview", action="store_true", help="仅展示请求消息，不调用模型")
+    parser.add_argument(
+        "--preview", action="store_true", help="仅展示请求消息，不调用模型"
+    )
     args = parser.parse_args()
     history = example_history()
     if args.preview:
@@ -72,8 +87,10 @@ def main() -> None:
         logger.error("请配置 LLM_BASE_URL。")
         raise SystemExit(1)
     with OpenAI(
-        api_key=llm_config.api_key.get_secret_value(), base_url=str(llm_config.base_url),
-        timeout=llm_config.timeout, max_retries=0,
+        api_key=llm_config.api_key.get_secret_value(),
+        base_url=str(llm_config.base_url),
+        timeout=llm_config.timeout,
+        max_retries=0,
     ) as client:
         compare(client, history)
 

@@ -31,7 +31,11 @@ class ToolExchange(BaseModel):
     def matching_results(self) -> "ToolExchange":
         calls = [call.id for call in self.calls]
         results = [result.tool_call_id for result in self.results]
-        if len(set(calls)) != len(calls) or len(set(results)) != len(results) or set(calls) != set(results):
+        if (
+            len(set(calls)) != len(calls)
+            or len(set(results)) != len(results)
+            or set(calls) != set(results)
+        ):
             raise ValueError("工具调用 ID 必须唯一，且每个调用恰好对应一个结果")
         return self
 

@@ -15,7 +15,9 @@ class TextTests(unittest.TestCase):
         return request_text(client, [])
 
     def test_multiple_leading_think_blocks(self):
-        self.assertEqual(self.clean(" <think>a</think>\n<think>b</think> 正文 "), "正文")
+        self.assertEqual(
+            self.clean(" <think>a</think>\n<think>b</think> 正文 "), "正文"
+        )
 
     def test_missing_body_or_unclosed_think(self):
         for text in ("<think>未闭合", "<think>只有思考</think>"):
@@ -27,13 +29,15 @@ class TextTests(unittest.TestCase):
         self.assertEqual(self.clean(text), text)
 
     def test_no_guessing_between_multiple_objects(self):
-        text = '说明 ```json\n{}\n``` 然后 {}'
+        text = "说明 ```json\n{}\n``` 然后 {}"
         self.assertEqual(self.clean(text), text)
 
     def test_public_request_removes_json_wrapper(self):
-        self.assertEqual(self.clean('<think>检查</think>```json\n{"passed":true,"issues":[]}\n```'),
-                         '{"passed":true,"issues":[]}')
+        self.assertEqual(
+            self.clean('<think>检查</think>```json\n{"passed":true,"issues":[]}\n```'),
+            '{"passed":true,"issues":[]}',
+        )
 
     def test_empty_json_fence_is_empty_response(self):
         with self.assertRaisesRegex(ValueError, "空文本"):
-            self.clean('```json\n\n```')
+            self.clean("```json\n\n```")

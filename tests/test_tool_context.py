@@ -11,16 +11,22 @@ from hello_agent.tools.tool_context import budget_tool_history, estimate_tool_to
 
 class ToolContextTests(unittest.TestCase):
     def config(self, limit):
-        return BudgetConfig(context_tokens=limit + 15, output_tokens=10, safety_tokens=5, _env_file=None)
+        return BudgetConfig(
+            context_tokens=limit + 15, output_tokens=10, safety_tokens=5, _env_file=None
+        )
 
     def test_exact_budget_and_whole_turn_removal(self):
         history = example_history()
         before = history.model_dump()
         full = budget_tool_history(history, "问题", "系统", self.config(10000))
         limit = estimate_tool_tokens(full)
-        self.assertEqual(budget_tool_history(history, "问题", "系统", self.config(limit)), full)
+        self.assertEqual(
+            budget_tool_history(history, "问题", "系统", self.config(limit)), full
+        )
         trimmed = budget_tool_history(history, "问题", "系统", self.config(limit - 1))
-        self.assertEqual([m["role"] for m in trimmed], ["system", "user", "assistant", "user"])
+        self.assertEqual(
+            [m["role"] for m in trimmed], ["system", "user", "assistant", "user"]
+        )
         self.assertNotIn("add_1", str(trimmed))
         self.assertNotIn("结果分别", str(trimmed))
         self.assertEqual(history.model_dump(), before)
@@ -45,7 +51,10 @@ class ToolContextTests(unittest.TestCase):
         data["turns"][0]["exchanges"][0]["results"].reverse()
         history = ToolHistory.model_validate(data)
         messages = budget_tool_history(history, "问题", "系统", self.config(10000))
-        self.assertEqual([m["tool_call_id"] for m in messages if m["role"] == "tool"], ["add_2", "add_1"])
+        self.assertEqual(
+            [m["tool_call_id"] for m in messages if m["role"] == "tool"],
+            ["add_2", "add_1"],
+        )
 
     def test_mutated_incomplete_history_rejected_even_under_tiny_budget(self):
         history = example_history()
@@ -65,4 +74,6 @@ class ToolContextTests(unittest.TestCase):
         messages = budget_tool_history(history, "问题", "系统", self.config(1000))
         self.assertEqual(len(messages), 2)
         with self.assertRaises(ValueError):
-            budget_tool_history(history, "问题", "系统", self.config(estimate_tool_tokens(messages) - 1))
+            budget_tool_history(
+                history, "问题", "系统", self.config(estimate_tool_tokens(messages) - 1)
+            )

@@ -16,10 +16,12 @@ from hello_agent.tools.memory import load_session, save_session, session_path
 
 class MemoryStorageTests(unittest.TestCase):
     def history(self):
-        return Conversation(messages=[
-            ConversationMessage(role="user", content="喜欢青绿色"),
-            ConversationMessage(role="assistant", content="收到"),
-        ])
+        return Conversation(
+            messages=[
+                ConversationMessage(role="user", content="喜欢青绿色"),
+                ConversationMessage(role="assistant", content="收到"),
+            ]
+        )
 
     def test_roundtrip_and_isolation(self):
         with TemporaryDirectory() as folder:
@@ -40,12 +42,17 @@ class MemoryStorageTests(unittest.TestCase):
             )
             result = subprocess.run(
                 [sys.executable, "-c", script, folder],
-                capture_output=True, text=True, env=os.environ.copy(),
+                capture_output=True,
+                text=True,
+                env=os.environ.copy(),
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_invalid_file_is_not_overwritten(self):
-        for content in ('broken', '{"messages":[{"role":"user","content":"unfinished"}]}'):
+        for content in (
+            "broken",
+            '{"messages":[{"role":"user","content":"unfinished"}]}',
+        ):
             with self.subTest(content=content), TemporaryDirectory() as folder:
                 directory = Path(folder)
                 path = session_path(directory, "a")
@@ -81,7 +88,10 @@ class MemoryStorageTests(unittest.TestCase):
                 self.assertEqual(len(session.messages), 2)
                 self.assertEqual(len(updated.messages), 4)
                 self.assertEqual(load_session(directory, "a"), updated)
-                with patch("hello_agent.sdk.e01_memory.agent.save_session", side_effect=OSError("disk")):
+                with patch(
+                    "hello_agent.sdk.e01_memory.agent.save_session",
+                    side_effect=OSError("disk"),
+                ):
                     with self.assertRaises(OSError):
                         persistent_chat(client, updated, "下一轮", "a")
                 self.assertEqual(len(updated.messages), 4)

@@ -8,11 +8,23 @@ from hello_agent.sdk.e04_structured.agent import validate_response
 
 class StructuredTests(unittest.TestCase):
     def test_valid_and_unknown(self):
-        self.assertEqual(validate_response(response('{"favorite_color":"青绿色"}')).favorite_color, "青绿色")
-        self.assertIsNone(validate_response(response('{"favorite_color":null}')).favorite_color)
+        self.assertEqual(
+            validate_response(response('{"favorite_color":"青绿色"}')).favorite_color,
+            "青绿色",
+        )
+        self.assertIsNone(
+            validate_response(response('{"favorite_color":null}')).favorite_color
+        )
 
     def test_invalid_json_fields_and_wrapping(self):
-        for text in ('broken', '{}', '{"favorite_color":3}', '{"favorite_color":"红色","extra":1}', '```json\n{"favorite_color":"红色"}\n```', ''):
+        for text in (
+            "broken",
+            "{}",
+            '{"favorite_color":3}',
+            '{"favorite_color":"红色","extra":1}',
+            '```json\n{"favorite_color":"红色"}\n```',
+            "",
+        ):
             with self.subTest(text=text), self.assertRaises(ValueError):
                 validate_response(response(text))
 

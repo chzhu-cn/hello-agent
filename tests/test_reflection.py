@@ -26,13 +26,21 @@ class ReflectionTests(unittest.TestCase):
 
     def test_first_pass(self):
         result = agent.run(self.client(GOOD, PASS))
-        self.assertEqual((result.requests, result.revisions, result.stop_reason), (2, 0, "passed"))
+        self.assertEqual(
+            (result.requests, result.revisions, result.stop_reason), (2, 0, "passed")
+        )
 
     def test_think_and_json_fences(self):
-        for feedback in (f"```json\n{PASS}\n```", f"<think>检查中</think>\n```JSON\n{PASS}\n```",
-                         f"``json {PASS} ``", f"```\n{PASS}\n```"):
+        for feedback in (
+            f"```json\n{PASS}\n```",
+            f"<think>检查中</think>\n```JSON\n{PASS}\n```",
+            f"``json {PASS} ``",
+            f"```\n{PASS}\n```",
+        ):
             with self.subTest(feedback=feedback):
-                result = agent.run(self.client(f"<think>计算中</think>{GOOD}", feedback))
+                result = agent.run(
+                    self.client(f"<think>计算中</think>{GOOD}", feedback)
+                )
                 self.assertEqual(result.answer, GOOD)
                 self.assertEqual(result.requests, 2)
                 self.assertTrue(result.critique.passed)
@@ -47,16 +55,22 @@ class ReflectionTests(unittest.TestCase):
         with patch.object(agent, "add", wraps=agent.add) as add:
             result = agent.run(client)
         self.assertEqual(add.call_count, 2)
-        self.assertEqual((result.answer, result.requests, result.revisions), (GOOD, 4, 1))
+        self.assertEqual(
+            (result.answer, result.requests, result.revisions), (GOOD, 4, 1)
+        )
         calls = client.chat.completions.create.call_args_list
         for call in calls:
             payload = json.loads(call.kwargs["messages"][-1]["content"])
             self.assertEqual(payload["task"], agent.TASK)
-            self.assertEqual([record["result"] for record in payload["records"]], [485, 581])
+            self.assertEqual(
+                [record["result"] for record in payload["records"]], [485, 581]
+            )
         revision_payload = json.loads(calls[2].kwargs["messages"][-1]["content"])
         self.assertEqual(revision_payload["answer"], BAD)
         self.assertFalse(revision_payload["critique"]["passed"])
-        self.assertEqual(json.loads(calls[3].kwargs["messages"][-1]["content"])["answer"], GOOD)
+        self.assertEqual(
+            json.loads(calls[3].kwargs["messages"][-1]["content"])["answer"], GOOD
+        )
 
     def test_revision_limit(self):
         result = agent.run(self.client(BAD, FAIL, BAD, FAIL))
@@ -69,8 +83,12 @@ class ReflectionTests(unittest.TestCase):
         self.assertEqual((result.requests, result.stop_reason), (2, "revision_limit"))
 
     def test_invalid_feedback_stops(self):
-        for feedback in ("bad json", '{"passed":true,"issues":["错误"]}',
-                         '{"passed":false,"issues":[]}', '{"passed":false,"issues":[" "]}'):
+        for feedback in (
+            "bad json",
+            '{"passed":true,"issues":["错误"]}',
+            '{"passed":false,"issues":[]}',
+            '{"passed":false,"issues":[" "]}',
+        ):
             with self.subTest(feedback=feedback):
                 client = self.client(GOOD, feedback)
                 with self.assertRaisesRegex(ValueError, "检查反馈无效"):
@@ -92,7 +110,9 @@ class ReflectionTests(unittest.TestCase):
 
     def test_tool_failure_stops_before_model(self):
         client = self.client()
-        with patch.object(agent, "add", side_effect=[485, RuntimeError("failure")]) as add:
+        with patch.object(
+            agent, "add", side_effect=[485, RuntimeError("failure")]
+        ) as add:
             with self.assertRaisesRegex(ValueError, "工具执行失败"):
                 agent.run(client)
         self.assertEqual(add.call_count, 2)

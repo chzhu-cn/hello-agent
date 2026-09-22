@@ -27,12 +27,18 @@ class SessionKey(BaseModel):
     name: str = Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")
 
 
-PreferenceKey = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
-PreferenceValue = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+PreferenceKey = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)
+]
+PreferenceValue = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)
+]
 
 
 class Preferences(BaseModel):
-    values: dict[PreferenceKey, PreferenceValue] = Field(default_factory=dict, max_length=50)
+    values: dict[PreferenceKey, PreferenceValue] = Field(
+        default_factory=dict, max_length=50
+    )
 
 
 class PreferenceChange(BaseModel):

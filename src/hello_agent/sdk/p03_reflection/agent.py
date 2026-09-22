@@ -35,12 +35,17 @@ def run(client: OpenAI) -> ReflectionResult:
         nonlocal requests
         requests += 1
         logger.info("模型请求 {}：{}", requests, instruction.split("。")[0])
-        return request_text(client, [
-            {"role": "system", "content": instruction},
-            {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
-        ])
+        return request_text(
+            client,
+            [
+                {"role": "system", "content": instruction},
+                {"role": "user", "content": json.dumps(payload, ensure_ascii=False)},
+            ],
+        )
 
-    answer = ask("根据原始任务和真实工具记录生成中文答案。列出两步算式与最终结果。", facts)
+    answer = ask(
+        "根据原始任务和真实工具记录生成中文答案。列出两步算式与最终结果。", facts
+    )
     logger.info("初稿：\n{}", answer)
     for revision in range(reflection_config.max_revisions + 1):
         text = ask(
@@ -58,13 +63,21 @@ def run(client: OpenAI) -> ReflectionResult:
         logger.info("检查反馈：{}", critique.model_dump_json())
         if critique.passed or revision == reflection_config.max_revisions:
             result = ReflectionResult(
-                answer=answer, critique=critique, revisions=revision,
-                requests=requests, tool_calls=len(records),
+                answer=answer,
+                critique=critique,
+                revisions=revision,
+                requests=requests,
+                tool_calls=len(records),
                 elapsed_seconds=perf_counter() - started,
                 stop_reason="passed" if critique.passed else "revision_limit",
             )
-            logger.info("停止原因：{}；模型请求 {} 次，工具 {} 次，耗时 {:.2f} 秒。",
-                        result.stop_reason, requests, len(records), result.elapsed_seconds)
+            logger.info(
+                "停止原因：{}；模型请求 {} 次，工具 {} 次，耗时 {:.2f} 秒。",
+                result.stop_reason,
+                requests,
+                len(records),
+                result.elapsed_seconds,
+            )
             if not critique.passed:
                 logger.warning("修改额度耗尽，答案未通过检查。")
             logger.info("最后答案（仍需按事实验收）：\n{}", answer)
@@ -82,8 +95,10 @@ def main() -> None:
         raise SystemExit(1)
     try:
         with OpenAI(
-            api_key=llm_config.api_key.get_secret_value(), base_url=str(llm_config.base_url),
-            timeout=llm_config.timeout, max_retries=0,
+            api_key=llm_config.api_key.get_secret_value(),
+            base_url=str(llm_config.base_url),
+            timeout=llm_config.timeout,
+            max_retries=0,
         ) as client:
             result = run(client)
         if not result.critique.passed:

@@ -15,9 +15,16 @@ class EvaluationTests(unittest.TestCase):
 
     def test_completed_wrong_and_failed_are_distinct(self):
         client = MagicMock()
-        client.chat.completions.create.side_effect = [response("红色"), response(""), response("不知道")]
+        client.chat.completions.create.side_effect = [
+            response("红色"),
+            response(""),
+            response("不知道"),
+        ]
         results = evaluate(client, cases()[:3])
-        self.assertEqual([(r.completed, r.passed) for r in results], [(True, False), (False, False), (True, True)])
+        self.assertEqual(
+            [(r.completed, r.passed) for r in results],
+            [(True, False), (False, False), (True, True)],
+        )
         self.assertEqual(results[1].error, "ValueError")
         self.assertEqual(client.chat.completions.create.call_count, 3)
 
@@ -25,7 +32,9 @@ class EvaluationTests(unittest.TestCase):
         client = MagicMock()
         items = cases()
         before = [item.model_dump() for item in items]
-        client.chat.completions.create.side_effect = [response(item.expected) for item in items]
+        client.chat.completions.create.side_effect = [
+            response(item.expected) for item in items
+        ]
         results = evaluate(client, items)
         self.assertTrue(all(result.passed for result in results))
         self.assertEqual(before, [item.model_dump() for item in items])

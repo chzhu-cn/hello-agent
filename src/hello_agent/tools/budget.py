@@ -13,9 +13,14 @@ def estimate_tokens(messages: list[dict[str, str]]) -> int:
 
 
 def budget_messages(
-    history: Conversation, prompt: str, system_prompt: str, budget: BudgetConfig,
+    history: Conversation,
+    prompt: str,
+    system_prompt: str,
+    budget: BudgetConfig,
 ) -> list[dict[str, str]]:
-    messages = build_messages(history, prompt, system_prompt, ContextPolicy(mode="full"))
+    messages = build_messages(
+        history, prompt, system_prompt, ContextPolicy(mode="full")
+    )
     input_limit = budget.context_tokens - budget.output_tokens - budget.safety_tokens
     while estimate_tokens(messages) > input_limit and len(messages) > 2:
         del messages[1:3]

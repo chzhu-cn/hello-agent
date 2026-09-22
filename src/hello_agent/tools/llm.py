@@ -13,10 +13,12 @@ def _strip_think(text: str) -> str:
     """仅移除响应开头完整的 think 块，保留正文中的字面内容。"""
     text = text.strip()
     while re.match(r"<think\s*>", text, flags=re.IGNORECASE):
-        block = re.match(r"<think\s*>.*?</think\s*>", text, flags=re.IGNORECASE | re.DOTALL)
+        block = re.match(
+            r"<think\s*>.*?</think\s*>", text, flags=re.IGNORECASE | re.DOTALL
+        )
         if block is None:
             raise ValueError("模型的 think 块未闭合。")
-        text = text[block.end():].strip()
+        text = text[block.end() :].strip()
     if not text:
         raise ValueError("模型返回空文本，未提供正文。")
     return text
@@ -27,7 +29,8 @@ def _clean_response(text: str) -> str:
     text = _strip_think(text)
     fenced = re.fullmatch(
         r"(?P<fence>`{2,}|~{3,})(?:json)?\s*(?P<body>.*?)\s*(?P=fence)",
-        text, flags=re.IGNORECASE | re.DOTALL,
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
     )
     text = fenced.group("body").strip() if fenced else text
     if not text:
@@ -35,13 +38,24 @@ def _clean_response(text: str) -> str:
     return text
 
 
-def request_message(client: OpenAI, messages: list, tools: list | None = None, *, max_tokens: int | None = None) -> ChatCompletionMessage:
+def request_message(
+    client: OpenAI,
+    messages: list,
+    tools: list | None = None,
+    *,
+    max_tokens: int | None = None,
+) -> ChatCompletionMessage:
     options = {"tools": tools, "tool_choice": "auto"} if tools else {}
     if max_tokens is not None:
         options["max_tokens"] = max_tokens
-    response = client.chat.completions.create(model=llm_config.model, messages=messages, **options)
+    response = client.chat.completions.create(
+        model=llm_config.model, messages=messages, **options
+    )
     if max_tokens is not None:
-        logger.info("服务返回 usage：{}", response.usage.model_dump_json() if response.usage else "未提供")
+        logger.info(
+            "服务返回 usage：{}",
+            response.usage.model_dump_json() if response.usage else "未提供",
+        )
     if not response.choices:
         raise ValueError("模型未返回 choices。")
     choice = response.choices[0]
@@ -58,5 +72,7 @@ def request_message(client: OpenAI, messages: list, tools: list | None = None, *
     return message.model_copy(update={"content": _clean_response(text)})
 
 
-def request_text(client: OpenAI, messages: list, *, max_tokens: int | None = None) -> str:
+def request_text(
+    client: OpenAI, messages: list, *, max_tokens: int | None = None
+) -> str:
     return request_message(client, messages, max_tokens=max_tokens).content

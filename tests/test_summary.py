@@ -15,7 +15,9 @@ class SummaryTests(unittest.TestCase):
         before = history.model_dump()
         client = MagicMock()
         client.chat.completions.create.return_value = response("用户最喜欢青绿色。")
-        messages = summary_messages(client, history, "独立问题", "系统", ContextPolicy(mode="window"))
+        messages = summary_messages(
+            client, history, "独立问题", "系统", ContextPolicy(mode="window")
+        )
         source = client.chat.completions.create.call_args.kwargs["messages"]
         self.assertIn("青绿色", source[1]["content"])
         self.assertNotIn("hello", source[1]["content"])
@@ -27,14 +29,26 @@ class SummaryTests(unittest.TestCase):
 
     def test_no_old_history_skips_request(self):
         client = MagicMock()
-        messages = summary_messages(client, example_history(), "问题", "系统", ContextPolicy(mode="window", recent_turns=100))
+        messages = summary_messages(
+            client,
+            example_history(),
+            "问题",
+            "系统",
+            ContextPolicy(mode="window", recent_turns=100),
+        )
         client.chat.completions.create.assert_not_called()
         self.assertEqual(len(messages), 10)
 
     def test_zero_window_summarizes_everything(self):
         client = MagicMock()
         client.chat.completions.create.return_value = response("摘要")
-        messages = summary_messages(client, example_history(), "问题", "系统", ContextPolicy(mode="window", recent_turns=0))
+        messages = summary_messages(
+            client,
+            example_history(),
+            "问题",
+            "系统",
+            ContextPolicy(mode="window", recent_turns=0),
+        )
         self.assertEqual(len(messages), 3)
         self.assertIn("整理书桌", str(client.chat.completions.create.call_args))
 
@@ -42,7 +56,9 @@ class SummaryTests(unittest.TestCase):
         for summary in ("用户练习了加法。", "用户最喜欢红色。"):
             client = MagicMock()
             client.chat.completions.create.return_value = response(summary)
-            messages = summary_messages(client, example_history(), "问题", "系统", ContextPolicy(mode="window"))
+            messages = summary_messages(
+                client, example_history(), "问题", "系统", ContextPolicy(mode="window")
+            )
             self.assertNotIn("青绿色", str(messages))
             self.assertIn(summary, messages[1]["content"])
 
@@ -52,6 +68,8 @@ class SummaryTests(unittest.TestCase):
         client = MagicMock()
         client.chat.completions.create.return_value = response("")
         with self.assertRaises(ValueError):
-            summary_messages(client, history, "问题", "系统", ContextPolicy(mode="window"))
+            summary_messages(
+                client, history, "问题", "系统", ContextPolicy(mode="window")
+            )
         self.assertEqual(client.chat.completions.create.call_count, 1)
         self.assertEqual(history.model_dump(), before)

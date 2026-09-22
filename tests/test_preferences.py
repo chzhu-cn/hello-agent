@@ -7,7 +7,11 @@ from unittest.mock import MagicMock, patch
 
 from test_tool_call import response
 from hello_agent.sdk.e01_memory.preferences import ask
-from hello_agent.tools.preferences import load_preferences, preference_path, update_preference
+from hello_agent.tools.preferences import (
+    load_preferences,
+    preference_path,
+    update_preference,
+)
 
 
 class PreferenceTests(unittest.TestCase):
@@ -40,7 +44,9 @@ class PreferenceTests(unittest.TestCase):
             for key, value in ((" ", "值"), ("颜色", " "), ("颜色", "x" * 501)):
                 with self.subTest(key=key), self.assertRaises(ValueError):
                     update_preference(directory, "a", key, value)
-            self.assertEqual(load_preferences(directory, "a").values, {"颜色": "青绿色"})
+            self.assertEqual(
+                load_preferences(directory, "a").values, {"颜色": "青绿色"}
+            )
             with self.assertRaises(ValueError):
                 load_preferences(directory, "../outside")
 
@@ -62,5 +68,9 @@ class PreferenceTests(unittest.TestCase):
                 with patch("pathlib.Path.replace", side_effect=OSError("disk")):
                     with self.assertRaises(OSError):
                         update_preference(directory, "a", "颜色", value)
-                self.assertEqual(load_preferences(directory, "a").values, {"颜色": "青绿色"})
-                self.assertEqual(list(directory.iterdir()), [preference_path(directory, "a")])
+                self.assertEqual(
+                    load_preferences(directory, "a").values, {"颜色": "青绿色"}
+                )
+                self.assertEqual(
+                    list(directory.iterdir()), [preference_path(directory, "a")]
+                )

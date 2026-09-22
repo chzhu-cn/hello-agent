@@ -18,15 +18,21 @@ def run(client: OpenAI, prompt: str) -> str:
     for step in range(1, agent_config.max_steps + 1):
         logger.info("步骤 {}/{}：请求模型。", step, agent_config.max_steps)
         response = client.chat.completions.create(
-            model=llm_config.model, messages=messages,
-            tools=[ADD_TOOL], tool_choice="auto",
+            model=llm_config.model,
+            messages=messages,
+            tools=[ADD_TOOL],
+            tool_choice="auto",
         )
         if not response.choices:
             raise ValueError("模型响应没有 choices。")
         choice = response.choices[0]
         message = choice.message
         if not message.tool_calls:
-            if choice.finish_reason != "stop" or not message.content or not message.content.strip():
+            if (
+                choice.finish_reason != "stop"
+                or not message.content
+                or not message.content.strip()
+            ):
                 raise ValueError("模型未返回完整的最终回答。")
             logger.success("最终回答：\n{}", message.content)
             logger.info("停止原因：正常完成，共 {} 步。", step)
@@ -55,17 +61,21 @@ def run(client: OpenAI, prompt: str) -> str:
             except Exception:
                 raise ValueError("add 执行失败，结束本次任务。") from None
             logger.info("工具结果：{}", result.result)
-            messages.append({
-                "role": "tool", "tool_call_id": call.id,
-                "content": result.model_dump_json(),
-            })
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": call.id,
+                    "content": result.model_dump_json(),
+                }
+            )
     raise ValueError("达到最大模型请求步数，任务尚未完成。")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="体验有步数限制的 Agent 循环")
     parser.add_argument(
-        "prompt", nargs="?",
+        "prompt",
+        nargs="?",
         default="请先调用 add 计算 127 加 358，收到工具结果后再调用 add 将结果加上 96，最后回答。",
     )
     args = parser.parse_args()
@@ -75,7 +85,9 @@ def main() -> None:
     try:
         with OpenAI(
             api_key=llm_config.api_key.get_secret_value(),
-            base_url=str(llm_config.base_url), timeout=llm_config.timeout, max_retries=0,
+            base_url=str(llm_config.base_url),
+            timeout=llm_config.timeout,
+            max_retries=0,
         ) as client:
             run(client, args.prompt)
     except ValidationError:

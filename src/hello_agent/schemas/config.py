@@ -32,8 +32,11 @@ class AgentConfig(BaseSettings):
     """Agent 执行限制，每一步表示一次模型请求。"""
 
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", env_prefix="AGENT_",
-        extra="ignore", hide_input_in_errors=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="AGENT_",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     max_steps: int = Field(default=5, ge=1, le=100)
@@ -41,8 +44,11 @@ class AgentConfig(BaseSettings):
 
 class PlanningConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", env_prefix="PLAN_",
-        extra="ignore", hide_input_in_errors=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="PLAN_",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     max_steps: int = Field(default=5, ge=1, le=100)
@@ -51,8 +57,11 @@ class PlanningConfig(BaseSettings):
 
 class ReflectionConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", env_prefix="REFLECTION_",
-        extra="ignore", hide_input_in_errors=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="REFLECTION_",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     max_revisions: int = Field(default=1, ge=0, le=2)
@@ -60,8 +69,11 @@ class ReflectionConfig(BaseSettings):
 
 class CooperationConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", env_prefix="COOP_",
-        extra="ignore", hide_input_in_errors=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="COOP_",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     worker_max_steps: int = Field(default=5, ge=1, le=100)
@@ -69,8 +81,11 @@ class CooperationConfig(BaseSettings):
 
 class MemoryConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", env_prefix="MEMORY_",
-        extra="ignore", hide_input_in_errors=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="MEMORY_",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     directory: Path = Path(".local/sessions")
@@ -78,8 +93,11 @@ class MemoryConfig(BaseSettings):
 
 class ContextConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", env_prefix="CONTEXT_",
-        extra="ignore", hide_input_in_errors=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="CONTEXT_",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     recent_turns: int = Field(default=2, ge=0, le=100)
@@ -87,8 +105,11 @@ class ContextConfig(BaseSettings):
 
 class BudgetConfig(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", env_prefix="BUDGET_",
-        extra="ignore", hide_input_in_errors=True,
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="BUDGET_",
+        extra="ignore",
+        hide_input_in_errors=True,
     )
 
     context_tokens: int = Field(default=640, gt=0)

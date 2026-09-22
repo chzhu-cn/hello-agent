@@ -14,14 +14,18 @@ from hello_agent.tools.llm import request_text
 
 class BudgetTests(unittest.TestCase):
     def budget(self, limit):
-        return BudgetConfig(context_tokens=limit + 15, output_tokens=10, safety_tokens=5, _env_file=None)
+        return BudgetConfig(
+            context_tokens=limit + 15, output_tokens=10, safety_tokens=5, _env_file=None
+        )
 
     def test_exact_boundary_and_whole_turn_removal(self):
         history = example_history()
         before = history.model_dump()
         full = build_messages(history, "问题", "系统", ContextPolicy(mode="full"))
         exact = estimate_tokens(full)
-        self.assertEqual(budget_messages(history, "问题", "系统", self.budget(exact)), full)
+        self.assertEqual(
+            budget_messages(history, "问题", "系统", self.budget(exact)), full
+        )
         cut = budget_messages(history, "问题", "系统", self.budget(exact - 1))
         self.assertEqual(cut, [full[0], *full[3:]])
         self.assertLessEqual(estimate_tokens(cut), exact - 1)
@@ -32,14 +36,18 @@ class BudgetTests(unittest.TestCase):
         full = build_messages(history, "问题", "系统", ContextPolicy(mode="full"))
         fixed = [full[0], full[-1]]
         limit = estimate_tokens(fixed)
-        self.assertEqual(budget_messages(history, "问题", "系统", self.budget(limit)), fixed)
+        self.assertEqual(
+            budget_messages(history, "问题", "系统", self.budget(limit)), fixed
+        )
         with self.assertRaises(ValueError):
             budget_messages(history, "问题", "系统", self.budget(limit - 1))
 
     def test_invalid_config(self):
         for fields in (
-            {"context_tokens": 192}, {"output_tokens": 0},
-            {"safety_tokens": -1}, {"context_tokens": 1},
+            {"context_tokens": 192},
+            {"output_tokens": 0},
+            {"safety_tokens": -1},
+            {"context_tokens": 1},
         ):
             with self.subTest(fields=fields), self.assertRaises(ValueError):
                 BudgetConfig(_env_file=None, **fields)
@@ -53,7 +61,9 @@ class BudgetTests(unittest.TestCase):
         client = MagicMock()
         client.chat.completions.create.return_value = response("回复")
         request_text(client, [], max_tokens=128)
-        self.assertEqual(client.chat.completions.create.call_args.kwargs["max_tokens"], 128)
+        self.assertEqual(
+            client.chat.completions.create.call_args.kwargs["max_tokens"], 128
+        )
         request_text(client, [])
         self.assertNotIn("max_tokens", client.chat.completions.create.call_args.kwargs)
 

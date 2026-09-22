@@ -23,19 +23,25 @@ class CooperationTests(unittest.TestCase):
         client = MagicMock()
         snapshots = []
         replies = iter(replies)
+
         def create(**kwargs):
             snapshots.append(deepcopy(kwargs))
             reply = next(replies)
             if isinstance(reply, Exception):
                 raise reply
             return reply
+
         client.chat.completions.create.side_effect = create
         return client, snapshots
 
     def normal(self):
-        return [response(DELEGATE), response(calls=[call()]),
-                response(calls=[call(arguments='{"a":485,"b":96}', id="second")]),
-                response("485，581"), response("127+358=485；485+96=581。")]
+        return [
+            response(DELEGATE),
+            response(calls=[call()]),
+            response(calls=[call(arguments='{"a":485,"b":96}', id="second")]),
+            response("485，581"),
+            response("127+358=485；485+96=581。"),
+        ]
 
     def test_normal_and_context_permissions(self):
         client, requests = self.client(self.normal())
@@ -54,12 +60,17 @@ class CooperationTests(unittest.TestCase):
         self.assertEqual(payload["original_task"], agent.TASK)
         self.assertEqual(payload["delegation"]["recipient"], "calculator")
         self.assertEqual(requests[2]["messages"][-1]["tool_call_id"], "call_1")
-        self.assertEqual(json.loads(requests[2]["messages"][-1]["content"])["result"], 485)
+        self.assertEqual(
+            json.loads(requests[2]["messages"][-1]["content"])["result"], 485
+        )
         self.assertIn('"result":581.0', requests[4]["messages"][-2]["content"])
 
     def test_bad_delegation_never_starts_worker(self):
-        for text in ('bad', '{"recipient":"other","instruction":"计算"}',
-                     '{"recipient":"calculator","instruction":" "}'):
+        for text in (
+            "bad",
+            '{"recipient":"other","instruction":"计算"}',
+            '{"recipient":"calculator","instruction":" "}',
+        ):
             with self.subTest(text=text), patch.object(agent, "add") as add:
                 client, requests = self.client([response(text)])
                 result = agent.run(client)
@@ -69,10 +80,16 @@ class CooperationTests(unittest.TestCase):
                 add.assert_not_called()
 
     def test_invalid_worker_calls_not_executed(self):
-        for calls in ([call(name="delegate")], [call(arguments='{}')],
-                      [call(), call(id="second")], [call(id="")]):
+        for calls in (
+            [call(name="delegate")],
+            [call(arguments="{}")],
+            [call(), call(id="second")],
+            [call(id="")],
+        ):
             with self.subTest(calls=calls), patch.object(agent, "add") as add:
-                client, requests = self.client([response(DELEGATE), response(calls=calls)])
+                client, requests = self.client(
+                    [response(DELEGATE), response(calls=calls)]
+                )
                 result = agent.run(client)
                 self.assertEqual(result.worker.status, "failed")
                 self.assertEqual(len(requests), 2)
@@ -80,7 +97,9 @@ class CooperationTests(unittest.TestCase):
 
     def test_failure_preserves_records_without_summary(self):
         client, requests = self.client(self.normal())
-        with patch.object(agent, "add", side_effect=[485, RuntimeError("failure")]) as add:
+        with patch.object(
+            agent, "add", side_effect=[485, RuntimeError("failure")]
+        ) as add:
             result = agent.run(client)
         self.assertEqual(result.status, "failed")
         self.assertEqual([r.result for r in result.worker.records], [485])
@@ -89,7 +108,10 @@ class CooperationTests(unittest.TestCase):
 
     def test_limit_does_not_execute_last_tool(self):
         client, requests = self.client(self.normal())
-        with patch.object(agent.cooperation_config, "worker_max_steps", 2), patch.object(agent, "add", wraps=agent.add) as add:
+        with (
+            patch.object(agent.cooperation_config, "worker_max_steps", 2),
+            patch.object(agent, "add", wraps=agent.add) as add,
+        ):
             result = agent.run(client)
         self.assertEqual(result.status, "failed")
         self.assertIn("上限", result.error)

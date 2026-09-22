@@ -17,7 +17,10 @@ def run(client: OpenAI, prompt: str) -> str:
     messages = [{"role": "user", "content": prompt}]
     logger.info("步骤 1：向模型提供 add 工具，等待回答或工具请求。")
     response = client.chat.completions.create(
-        model=config.model, messages=messages, tools=[ADD_TOOL], tool_choice="auto",
+        model=config.model,
+        messages=messages,
+        tools=[ADD_TOOL],
+        tool_choice="auto",
     )
     if not response.choices:
         raise ValueError("模型响应没有 choices。")
@@ -37,14 +40,19 @@ def run(client: OpenAI, prompt: str) -> str:
         logger.info("工具结果：{}", result.result)
         # 保留 assistant 的工具请求，再用同一个 ID 回传结果。
         messages.append(message.model_dump(exclude_none=True))
-        messages.append({
-            "role": "tool", "tool_call_id": call.id,
-            "content": result.model_dump_json(),
-        })
+        messages.append(
+            {
+                "role": "tool",
+                "tool_call_id": call.id,
+                "content": result.model_dump_json(),
+            }
+        )
         logger.info("步骤 3：回传工具结果，请求最终回答。")
         response = client.chat.completions.create(
-            model=config.model, messages=messages,
-            tools=[ADD_TOOL], tool_choice="none",
+            model=config.model,
+            messages=messages,
+            tools=[ADD_TOOL],
+            tool_choice="none",
         )
         if not response.choices:
             raise ValueError("第二次响应没有 choices。")
@@ -64,7 +72,9 @@ def run(client: OpenAI, prompt: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="体验一次加法工具调用")
     parser.add_argument(
-        "prompt", nargs="?", default="请使用工具计算 127 加 358。",
+        "prompt",
+        nargs="?",
+        default="请使用工具计算 127 加 358。",
     )
     args = parser.parse_args()
     if not args.prompt.strip() or config.base_url is None:
@@ -73,7 +83,9 @@ def main() -> None:
     try:
         with OpenAI(
             api_key=config.api_key.get_secret_value(),
-            base_url=str(config.base_url), timeout=config.timeout, max_retries=0,
+            base_url=str(config.base_url),
+            timeout=config.timeout,
+            max_retries=0,
         ) as client:
             run(client, args.prompt)
     except ValidationError:

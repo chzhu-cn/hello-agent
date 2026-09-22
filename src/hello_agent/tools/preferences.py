@@ -20,7 +20,9 @@ def load_preferences(directory: Path, profile: str) -> Preferences:
     return Preferences.model_validate_json(content)
 
 
-def update_preference(directory: Path, profile: str, key: str, value: str | None) -> Preferences:
+def update_preference(
+    directory: Path, profile: str, key: str, value: str | None
+) -> Preferences:
     current = load_preferences(directory, profile)
     # None 表示删除，空字符串不代表删除。
     change = PreferenceChange(key=key, value=value)
@@ -30,5 +32,7 @@ def update_preference(directory: Path, profile: str, key: str, value: str | None
     else:
         values[change.key] = change.value
     updated = Preferences(values=values)
-    write_memory_json(preference_path(directory, profile), updated.model_dump_json(indent=2))
+    write_memory_json(
+        preference_path(directory, profile), updated.model_dump_json(indent=2)
+    )
     return updated

@@ -13,10 +13,13 @@ def tool_history_messages(history: ToolHistory) -> list[dict]:
     for turn in validated.turns:
         messages.append({"role": "user", "content": turn.user})
         for exchange in turn.exchanges:
-            messages.append({
-                "role": "assistant", "content": exchange.content,
-                "tool_calls": [call.model_dump() for call in exchange.calls],
-            })
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": exchange.content,
+                    "tool_calls": [call.model_dump() for call in exchange.calls],
+                }
+            )
             messages.extend(result.model_dump() for result in exchange.results)
         messages.append({"role": "assistant", "content": turn.answer})
     return messages
@@ -29,7 +32,10 @@ def estimate_tool_tokens(messages: list[dict]) -> int:
 
 
 def budget_tool_history(
-    history: ToolHistory, prompt: str, system_prompt: str, budget: BudgetConfig,
+    history: ToolHistory,
+    prompt: str,
+    system_prompt: str,
+    budget: BudgetConfig,
 ) -> list[dict]:
     remaining = ToolHistory.model_validate(history.model_dump())
     question = ConversationMessage(role="user", content=prompt.strip()).model_dump()
@@ -37,7 +43,8 @@ def budget_tool_history(
     while True:
         messages = [
             {"role": "system", "content": system_prompt},
-            *tool_history_messages(remaining), question,
+            *tool_history_messages(remaining),
+            question,
         ]
         if estimate_tool_tokens(messages) <= limit:
             return messages

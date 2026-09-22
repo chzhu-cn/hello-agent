@@ -24,7 +24,9 @@ class MemoryTests(unittest.TestCase):
         chat(client, first, "喜欢青绿色")
         chat(client, first, "喜欢什么颜色？")
         chat(client, second, "喜欢什么颜色？")
-        self.assertEqual([m["role"] for m in snapshots[1]], ["system", "user", "assistant", "user"])
+        self.assertEqual(
+            [m["role"] for m in snapshots[1]], ["system", "user", "assistant", "user"]
+        )
         self.assertEqual(snapshots[1][1]["content"], "喜欢青绿色")
         self.assertEqual(snapshots[1][2]["content"], "记住了")
         self.assertEqual(len(snapshots[2]), 2)
@@ -35,7 +37,11 @@ class MemoryTests(unittest.TestCase):
         for failure in (RuntimeError("connection"), response("")):
             with self.subTest(failure=failure):
                 client = MagicMock()
-                client.chat.completions.create.side_effect = [response("收到"), failure, response("恢复")]
+                client.chat.completions.create.side_effect = [
+                    response("收到"),
+                    failure,
+                    response("恢复"),
+                ]
                 session = Conversation()
                 chat(client, session, "第一轮")
                 before = session.model_dump()
