@@ -14,6 +14,8 @@
 
 ## 维护方式
 
+- 2026-09-22：修复 E04 请求调用的 Pylance 类型报错，为响应格式和完整请求参数添加 SDK 类型标注。两个相关文件的 Pyright 检查为 0 错误、0 警告，E04 的 4 项离线测试通过；未推进学习阶段。
+
 - 2026-09-18：按用户要求将 `tests/manual_logly_json_bad_case.py` 简化为普通脚本，移除 unittest 和子进程；用 print 展示原文、logly 展示实际输出。运行正常退出，仍复现数组和方括号内容丢失；不再使用断言或失败退出码。
 
 - 2026-09-18：新增 `tests/manual_logly_json_bad_case.py` 最小断言反例，独立子进程调用 `logger.info("payload=\n{}", json.dumps(..., indent=2))`，显式 stdout sink 且 colorize=False。实测 1 项失败、退出码 1：messages 数组及字符串中的 `[hello]` 均丢失。测试断言正确行为，不将当前缺陷作为通过条件；独立运行，不加入默认测试发现。未修复业务代码。

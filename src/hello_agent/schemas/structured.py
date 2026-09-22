@@ -1,6 +1,7 @@
 """E04：明确偏好提取结果，结构校验不代替事实验收。"""
 
 from pydantic import BaseModel, ConfigDict, Field
+from openai.types.shared_params.response_format_json_schema import ResponseFormatJSONSchema
 
 
 class ColorPreference(BaseModel):
@@ -11,7 +12,7 @@ class ColorPreference(BaseModel):
     )
 
 
-COLOR_RESPONSE_FORMAT = {
+COLOR_RESPONSE_FORMAT: ResponseFormatJSONSchema = {
     "type": "json_schema",
     "json_schema": {
         "name": "color_preference",

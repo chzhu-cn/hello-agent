@@ -3,6 +3,7 @@
 from logly import logger
 from openai import APIError, OpenAI
 from openai.types.chat import ChatCompletion
+from openai.types.chat.completion_create_params import CompletionCreateParamsNonStreaming
 
 from hello_agent.config.settings import llm_config
 from hello_agent.schemas.structured import COLOR_RESPONSE_FORMAT, ColorPreference
@@ -41,17 +42,18 @@ def main() -> None:
         max_retries=0,
     ) as client:
         for mode in ("prompt", "schema"):
-            options = (
-                {"response_format": COLOR_RESPONSE_FORMAT} if mode == "schema" else {}
-            )
+            options: CompletionCreateParamsNonStreaming = {
+                "model": llm_config.model,
+                "messages": [
+                    {"role": "system", "content": SYSTEM},
+                    {"role": "user", "content": TASK},
+                ],
+            }
+            if mode == "schema":
+                options["response_format"] = COLOR_RESPONSE_FORMAT
             print("COLOR_RESPONSE_FORMAT: ", COLOR_RESPONSE_FORMAT)
             try:
                 response = client.chat.completions.create(
-                    model=llm_config.model,
-                    messages=[
-                        {"role": "system", "content": SYSTEM},
-                        {"role": "user", "content": TASK},
-                    ],
                     **options,
                 )
                 result = validate_response(response)
