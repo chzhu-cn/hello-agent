@@ -29,3 +29,15 @@ class LoadedSkill(BaseModel):
     name: SkillName
     instructions: str
     available_resources: list[str]
+
+
+class SkillSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: SkillName | None
+
+
+class ResourceSelection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    resources: list[SkillName]
