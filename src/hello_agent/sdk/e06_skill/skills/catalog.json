@@ -1,0 +1,14 @@
+{
+  "skills": {
+    "addition-guide": {
+      "name": "addition-guide",
+      "description": "使用已有 add 工具完成加法，并展示算式和结果。",
+      "resources": {"example": "resources/example.md"}
+    },
+    "learning-review": {
+      "name": "learning-review",
+      "description": "按概念、例子和易错点整理学习回顾。",
+      "resources": {"template": "resources/template.md"}
+    }
+  }
+}
