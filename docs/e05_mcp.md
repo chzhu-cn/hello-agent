@@ -25,6 +25,20 @@ uv run python -m hello_agent.sdk.e05_mcp.client
 
 工具调用错误通过 isError 返回，连接故障则可能直接抛出异常。客户端设定单次请求等待上限 10 秒；此上限不等于整个子进程生命周期的总时限。服务突然断开和执行函数内部异常尚未实验，不能将参数错误测试视作这两项验证。
 
-## 下一小步
+## 模型接入（2026-09-23）
 
-将 MCP 发现的工具定义转换为模型 API 接受的 tools，再把模型返回的工具调用转给 MCP，将结果按 tool_call_id 回传模型。模型本身不负责建立这个 stdio 连接，适配由我们的程序完成。本步尚未实现这段模型接入，整个 E05 保留未完成。
+```sh
+uv run python -m hello_agent.sdk.e05_mcp.agent
+```
+
+此入口使用现有 `.env` 模型配置。原 client 入口仍可独立运行。
+
+数据流：list_tools → 将 name、description、inputSchema 转为模型 tools → 模型返回工具调用 → 校验名称、ID 和 JSON 对象 → MCP call_tool → 保留 assistant 调用及同一 tool_call_id 的结果消息 → 模型回答。
+
+关键区别：模型只生成工具名称和参数；我们的客户端负责连接 MCP 服务；服务端校验 add 参数并执行 Python 函数。工具声明从服务发现，不在模型入口重复手写 add Schema。
+
+本步最多一次工具调用、两次模型请求。MCP 的 isError、content 和 structuredContent 一起回传，让模型知道失败；连接异常直接向上传播，不自动重试。该示例只面向本地 add 服务，尚未扩展分页发现、多模态结果与多工具循环。
+
+新增 4 项受控测试，覆盖声明转换、ID 关联、成功与错误结果、直接回答、非法调用拒绝、连接异常不重试；全套 95 项测试通过。受控 ConnectionError 不等于真实服务断开实验，真实断开与服务内部执行异常仍待下一步验证。学习理解仍待回顾，整个 E05 保留未完成。
+
+真实模型验证：使用当前配置的 gemini-2.5-flash，模型请求 add，MCP 返回 isError=False，第二次模型请求最终回答 485，进程正常退出。共两次模型请求、一次 MCP 工具调用。
