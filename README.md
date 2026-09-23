@@ -132,6 +132,8 @@ uv run python -m hello_agent.sdk.e02_context.agent
 
 ## 验证与已观察到的结果
 
+E05-A 本地 MCP：`uv run python -m hello_agent.sdk.e05_mcp.client`。自动启动服务子进程，发现 add 并调用得到 485；无需模型或 API 密钥。详见 [E05 学习记录](docs/e05_mcp.md)。
+
 E04 结构化输出：`uv run python -m hello_agent.sdk.e04_structured.agent`。同一颜色提取任务分别使用提示 JSON 与 json_schema 参数，两种结果都经 Pydantic 和独立事实校验。详见 [E04 学习记录](docs/e04_structured.md)。
 
 E03-A 最小评估：`uv run python -m hello_agent.sdk.e03_evaluation.agent`。复用 E01，运行六道固定题；逐题记录是否完成、是否通过短答案规则、答案、耗时和错误类型。共六次模型请求，不用模型自评。详见 [评估学习记录](docs/e03_evaluation.md)。
@@ -176,7 +178,7 @@ tests/                      # 离线受控响应测试
 docs/                       # 需求、路线、进度和实验记录
 ```
 
-当前实际依赖为 openai、logly、Pydantic 和 pydantic-settings，由 uv 管理。业务模块导入 schemas 中的数据定义，共用工具放在 tools 中；各学习入口保留为独立示例。
+当前直接依赖为 openai、logly、Pydantic、pydantic-settings 和 MCP SDK，由 uv 管理。业务模块导入 schemas 中的数据定义，共用工具放在 tools 中；各学习入口保留为独立示例。
 
 ## 学习文档
 
