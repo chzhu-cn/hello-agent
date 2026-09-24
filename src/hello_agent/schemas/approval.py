@@ -22,6 +22,13 @@ class PaymentProposal(BaseModel):
     payment: PaymentArguments
 
 
+class PaymentDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    payment: PaymentArguments | None
+    reason: str = Field(min_length=1, max_length=500)
+
+
 class ApprovalState(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
