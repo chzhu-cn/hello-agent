@@ -103,6 +103,15 @@ class ContextConfig(BaseSettings):
     recent_turns: int = Field(default=2, ge=0, le=100)
 
 
+class LedgerConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_prefix="LEDGER_",
+        extra="ignore", hide_input_in_errors=True,
+    )
+
+    path: Path = Path(".local/payments.sqlite3")
+
+
 class BudgetConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
