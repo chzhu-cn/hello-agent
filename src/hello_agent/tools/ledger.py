@@ -11,6 +11,10 @@ from hello_agent.schemas.approval import PaymentArguments
 from hello_agent.schemas.ledger import PaymentOperation
 
 
+class IdempotencyConflict(ValueError):
+    """明确的参数冲突，不能通过重试修复。"""
+
+
 class PaymentLedger:
     def __init__(self, path: Path):
         self.path = path
@@ -32,7 +36,7 @@ class PaymentLedger:
             if row is not None:
                 stored = PaymentArguments.model_validate_json(row[0])
                 if stored != operation.payment:
-                    raise ValueError("同一操作 ID 已绑定不同参数，拒绝记账")
+                    raise IdempotencyConflict("同一操作 ID 已绑定不同参数，拒绝记账")
                 logger.info("命中已有记录，不重复记账：{}", operation.operation_id)
             else:
                 connection.execute(

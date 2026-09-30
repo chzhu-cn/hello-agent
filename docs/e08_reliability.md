@@ -50,6 +50,47 @@ uv run python -m unittest discover -s tests -p "test_ledger.py"
 
 ## 下一小步与边界
 
-E08-B 再加入有限重试、故障分类与查询失败时保留未知状态。当前数据库错误直接抛出，不当作“未执行”，不自动重试。query 返回 None 只说明此时该数据库未查到成功记录，不能泛化成远端请求确定失败。
+E08-A 中数据库错误直接抛出，不当作“未执行”，不自动重试。query 返回 None 只说明此时该数据库未查到成功记录，不能泛化成远端请求确定失败。E08-B 的有限重试策略见下文。
 
 本地 SQLite 能把模拟副作用与幂等记录放在同一事务；真实远程付款和本地数据库不共享事务，不能把本实验当作跨系统恰好一次执行的保证。当前未验证并发压力、数据库损坏和真实进程崩溃恢复。
+
+## E08-B：有限重试与结果未知（2026-09-30）
+
+```sh
+uv run python -m hello_agent.sdk.e08_reliability.retry before-timeout
+uv run python -m hello_agent.sdk.e08_reliability.retry after-timeout
+uv run python -m hello_agent.sdk.e08_reliability.retry query-unavailable
+uv run python -m hello_agent.sdk.e08_reliability.retry always-timeout
+uv run python -m hello_agent.sdk.e08_reliability.retry conflict
+```
+
+每次启动是独立的新实验，因此生成新 ID；同一次实验的所有重试共用原 ID 和参数。仍使用 LEDGER_PATH 对应的持久账本。本步不调用模型、不连接真实付款服务，也未整合人工审批。
+
+### 策略
+
+- 正常响应或查询结果与请求完全匹配：succeeded。
+- 明确的 IdempotencyConflict：rejected，不查询、不重试。非法付款参数仍由 Pydantic 在构造请求时拒绝。
+- TimeoutError / ConnectionError：先查询；查到匹配记录就结束，查到不匹配内容则 unknown 并停止。
+- 查询成功但未查到记录：仅依赖底层幂等保证，用同 ID 同参数继续尝试，直到上限。
+- 查询发生异常或执行发生未分类异常：unknown，停止重发。
+- 最后一次执行仍超时：仍查询一次，未能确认就返回 unknown，不能写成确定失败。
+
+`.env` 可设置 `RETRY_MAX_ATTEMPTS=3`，这是包含首次调用的总执行次数上限，不是额外重试次数；每次执行异常最多发起一次查询。结果包含操作 ID、状态、执行尝试数、查询次数和原因。
+
+### 实测结果
+
+默认三次上限，五个本地场景均正常结束：
+
+| 场景 | 状态 | 执行 / 查询次数 | 实验侧账本 |
+| --- | --- | --- | --- |
+| 首次提交前超时 | succeeded | 2 / 1 | 新增 1 笔 |
+| 提交成功后响应丢失 | succeeded | 1 / 1 | 新增 1 笔 |
+| 提交成功后响应丢失，查询不可用 | unknown | 1 / 1 | 新增 1 笔 |
+| 每次都超时 | unknown | 3 / 3 | 新增 0 笔 |
+| 同 ID 参数冲突 | rejected | 1 / 0 | 只有 1 笔预置记录，冲突请求未记账 |
+
+查询不可用场景最关键：实验者能直接检查本地账本，但执行策略只知道查询失败，因此保留 unknown。实际副作用和调用方已确认的信息不是一回事。
+
+新增 7 项测试通过，原账本 4 项回归测试通过，共 11 项。覆盖查询确认后不重发、查询失败即停止、尝试上限含首次调用、最后一次仍查询、同 ID 参数不变、参数冲突、未分类异常及不匹配响应。未重跑全套测试。
+
+本步的超时和连接错误仍为主动注入，没有实现对阻塞函数的实际计时中断、退避等待、总时限或真实网络验证；次数上限不等于耗时上限。重试策略只能用于本例这种明确支持幂等的执行接口，不能直接套到任意有副作用工具。
