@@ -11,6 +11,7 @@ from hello_agent.schemas.config import ContextConfig
 from hello_agent.schemas.config import BudgetConfig
 from hello_agent.schemas.config import LedgerConfig
 from hello_agent.schemas.config import RetryConfig
+from hello_agent.schemas.config import CheckpointConfig
 
 
 llm_config = LLMConfig()
@@ -43,3 +44,6 @@ logger.success("Successfully load ledger config: {}", ledger_config)
 
 retry_config = RetryConfig()
 logger.success("Successfully load retry config: {}", retry_config)
+
+checkpoint_config = CheckpointConfig()
+logger.success("Successfully load checkpoint config: {}", checkpoint_config)

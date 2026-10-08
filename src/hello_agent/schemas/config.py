@@ -121,6 +121,15 @@ class RetryConfig(BaseSettings):
     max_attempts: int = Field(default=3, ge=1, le=10)
 
 
+class CheckpointConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env", env_file_encoding="utf-8", env_prefix="CHECKPOINT_",
+        extra="ignore", hide_input_in_errors=True,
+    )
+
+    path: Path = Path(".local/approval-checkpoint.json")
+
+
 class BudgetConfig(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",

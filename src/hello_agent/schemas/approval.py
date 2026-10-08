@@ -3,7 +3,7 @@
 from typing import Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class PaymentArguments(BaseModel):
@@ -35,6 +35,15 @@ class ApprovalState(BaseModel):
     proposal: PaymentProposal
     status: Literal["pending", "approved", "rejected", "executed"] = "pending"
     approved_id: UUID | None = None
+
+    @model_validator(mode="after")
+    def approval_matches_proposal(self) -> "ApprovalState":
+        if self.status in ("approved", "executed"):
+            if self.approved_id != self.proposal.id:
+                raise ValueError("批准记录必须匹配当前提案 ID")
+        elif self.approved_id is not None:
+            raise ValueError("待审批或拒绝状态不能携带批准记录")
+        return self
 
 
 class PaymentReceipt(BaseModel):

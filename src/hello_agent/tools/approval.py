@@ -14,6 +14,15 @@ class PaymentApproval:
         self._state = ApprovalState(proposal=PaymentProposal(payment=payment))
         self._ledger: list[PaymentReceipt] = []
 
+    @classmethod
+    def restore(cls, state: ApprovalState) -> "PaymentApproval":
+        state = ApprovalState.model_validate(state.model_dump())
+        if state.status == "executed":
+            raise ValueError("本步不能恢复已执行状态，需要连同账本与执行结果一起恢复")
+        review = cls(state.proposal.payment)
+        review._state = state
+        return review
+
     @property
     def state(self) -> ApprovalState:
         return self._state
