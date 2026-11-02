@@ -1,6 +1,7 @@
 """审批检查点体验：uv run python -m hello_agent.sdk.e09_recovery.local"""
 
 from logly import logger
+from pydantic import ValidationError
 
 from hello_agent.config.settings import checkpoint_config
 from hello_agent.schemas.approval import PaymentArguments
@@ -17,6 +18,12 @@ def main() -> None:
             recipient="示例供应商 A", amount_cents=12500, note="E09 检查点实验",
         ))
         save_approval(path, review.state)
+    except ValidationError:
+        logger.error(
+            "审批检查点校验失败：{}。请检查状态与批准 ID 是否一致，或从可信备份恢复；文件未覆盖。",
+            path,
+        )
+        raise SystemExit(1) from None
     else:
         review = PaymentApproval.restore(saved)
     logger.info("本步只保存审批状态，不执行付款或写入账本。")
