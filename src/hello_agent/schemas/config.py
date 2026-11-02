@@ -128,6 +128,7 @@ class CheckpointConfig(BaseSettings):
     )
 
     path: Path = Path(".local/approval-checkpoint.json")
+    execution_path: Path = Path(".local/execution-checkpoint.json")
 
 
 class BudgetConfig(BaseSettings):

@@ -52,3 +52,58 @@ uv run python -m unittest discover -s tests -p "test_approval*.py"
 E09-B 再处理工具调用前后中断：保存未决操作、复用 E08 原操作 ID 查询账本、确认成功后不重跑。审批检查点和账本不在一个事务里的时间窗口需要单独处理，不能只恢复一个 approved 字段就假定从未执行。
 
 本步按单进程串行使用，检查点视为可信本地文件。字段校验不提供身份认证或防篡改能力；未支持多个实例同时修改，也未证明真实崩溃、断电后的恢复保证。
+
+## E09-B：执行前后中断与未决操作恢复（2026-10-08）
+
+先通过 E09-A 入口输入 a，保存一份已批准提案。执行入口使用该提案 ID 作为 E08 操作 ID，并将原参数存入独立执行检查点。
+
+```sh
+# 已批准后，正常执行并保存结果
+uv run python -m hello_agent.sdk.e09_recovery.execution execute
+
+# 恢复已有执行检查点，只查询，不重新调用工具
+uv run python -m hello_agent.sdk.e09_recovery.execution recover
+```
+
+`.env` 新增 `CHECKPOINT_EXECUTION_PATH=.local/execution-checkpoint.json`。审批文件、执行文件和账本路径应在恢复时保持一致；新提案使用新的执行文件路径，不能覆盖另一提案的执行记录。
+
+### 执行顺序
+
+```text
+读取 approved 审批 → 保存 approved 执行检查点
+→ 保存 executing → 调用幂等账本 → 保存 succeeded 与完整结果
+```
+
+执行检查点保存批准 ID、原参数、阶段及已确认结果。保存 executing 失败就不会调用工具。若工具已成功但保存结果失败，文件仍是 executing，重启后可以按原 ID 查询账本补回结果。成功结果必须匹配提案 ID 和参数。
+
+恢复规则：
+
+- succeeded：直接使用保存的结果，不查询也不执行。
+- executing / unknown：按原操作 ID 查询；匹配则保存 succeeded，查不到匹配结果或查询失败则保留 unknown。
+- approved：仅恢复尚未启动状态，recover 不自动执行，需显式 execute。
+- rejected：保持终止状态，不重新执行。
+
+同 ID 参数冲突由账本明确拒绝，保存 rejected。对未决状态，本步不自动重发；E08 的幂等重试策略不意味着每次恢复都必须执行重试。
+
+### 真实进程退出实验
+
+为一份新的已批准提案设置独立的执行检查点后，可注入中断：
+
+```sh
+uv run python -m hello_agent.sdk.e09_recovery.execution execute --crash-at after-call
+uv run python -m hello_agent.sdk.e09_recovery.execution recover
+```
+
+after-call 在账本提交之后、结果检查点保存之前立即退出当前实验进程，退出码 73。恢复查询可确认成功，账本仍是一笔。before-call 在保存 executing 之后、调用工具之前退出；恢复查不到结果，会保留 unknown，不自动调用工具。若检查点已是终止状态，故障开关不会重新运行工具。
+
+两种实验说明同一个 executing 文件可能对应“还没调用”或“已成功记账”，不能仅靠执行阶段推断副作用。注入点处的进程退出已验证；这不等于证明任意指令位置、断电或多进程并发下的恢复保证。
+
+### 验证
+
+```sh
+uv run python -m unittest discover -s tests -p "test_recovery.py"
+```
+
+8 项新增测试通过：未批准不能准备执行、正常成功及重复恢复不执行、调用前/提交后真实子进程退出、查询失败后再次查询恢复、工具前保存失败不调用、结果保存失败后补回成功、新提案不能覆盖旧执行检查点。另有 6 项 E09-A 和 4 项账本回归测试通过，共 18 项。本次未调用模型、未重跑全套测试，用户手动体验与回顾仍待完成。
+
+本步使用可信本地审批文件与单进程执行。恢复执行前不重新请求模型，也不让模型重写参数。已执行结果保存到新执行检查点，E09-A 审批文件仍作为批准快照，E07 的内存 execute 方法未接入此入口。
